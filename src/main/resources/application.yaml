@@ -34,3 +34,7 @@ server:
 app:
   storage:
     image-dir: E:/Java/user-images/
+jwt:
+  secret: veryStrongSecretKeyChangeLater1452369871zcvbnm,asdfghjkl;'][poiuytrewqQWEDFGHJNM<VBJKOPUJKMTRFGBWEDCVBOIKL<POLKAWSEDRFYGUHJ
+  expiration: 86400000
+  refresh-expiration: 604800000
