@@ -1,10 +1,9 @@
 package com.Blog.UserService.Controller;
 
-import com.Blog.UserService.DTO.SignInRequest;
-import com.Blog.UserService.DTO.SignInResponse;
-import com.Blog.UserService.DTO.SignUpRequest;
-import com.Blog.UserService.DTO.SignUpResponse;
+import com.Blog.UserService.DTO.*;
 import com.Blog.UserService.Service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,9 +36,28 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<SignInResponse> login(
-            @Valid @RequestBody SignInRequest request
+            @Valid @RequestBody SignInRequest request,
+            HttpServletResponse response
     ) {
-        return ResponseEntity.ok(authService.login(request));
+        return ResponseEntity.ok(authService.login(request, response));
     }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request,
+                                       HttpServletResponse response) {
+        authService.logout(request, response);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponse> refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        return ResponseEntity.ok(authService.refreshToken(request, response));
+    }
+
+
 
 }
