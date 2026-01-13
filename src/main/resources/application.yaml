@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: UserService
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/user_service?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: blog_app
+    password: strongPass123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  security:
+    user:
+      name: user
+      password: 0000
+
+  # FIXED: Moved these out of 'app' and into 'spring'
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 8080
+  # FIXED: Moved tomcat config to the top-level 'server' block
+  tomcat:
+    max-swallow-size: 10MB
+
+app:
+  storage:
+    image-dir: E:/Java/user-images/
