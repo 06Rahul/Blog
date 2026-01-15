@@ -21,6 +21,12 @@ public class BlogPost {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+// summary field
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
+    private LocalDateTime publishedAt;
+
 
     @Column(nullable = false, length = 200)
     private String title;

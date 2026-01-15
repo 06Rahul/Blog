@@ -12,6 +12,7 @@ public class BlogPostMapper {
                 blog.getId(),
                 blog.getTitle(),
                 blog.getContent(),
+                blog.getSummary(),
                 blog.getStatus(),
                 blog.getAuthor().getId(),
                 blog.getAuthor().getUsername(),
@@ -19,5 +20,6 @@ public class BlogPostMapper {
                 blog.getUpdatedAt(),
                 blog.getPublishedAt()
         );
+
     }
 }
