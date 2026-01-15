@@ -42,4 +42,4 @@ jwt:
 gemini:
   api:
     key: AIzaSyDQGkNa3CVBu8wWyini60uWkh-72IUQVw0
-    url: curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
