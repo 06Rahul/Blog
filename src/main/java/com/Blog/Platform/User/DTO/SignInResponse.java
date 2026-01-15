@@ -16,17 +16,17 @@ public class SignInResponse {
     private String accessToken;
 
     public SignInResponse(UUID id,
-                          @Email String email, String username,
-                          String name, String profileImageUrl, String accessToken) {
+                          String email,
+                          String username,
+                          String role,
+                          String profileImageUrl,
+                          String accessToken) {
         this.id = id;
         this.email = email;
         this.username = username;
-        this.username = username;
+        this.role = role;
         this.profileImageUrl = profileImageUrl;
         this.accessToken = accessToken;
-
-
-
     }
 }
 
