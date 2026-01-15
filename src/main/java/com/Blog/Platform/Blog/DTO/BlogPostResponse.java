@@ -14,9 +14,10 @@ public class BlogPostResponse {
     private UUID id;
     private String title;
     private String content;
+    private String summary;      // ✅ ADD THIS
     private BlogStatus status;
 
-    // Flattened author info (BEST PRACTICE)
+    // Flattened author info
     private UUID authorId;
     private String authorUsername;
 

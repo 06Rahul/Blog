@@ -1,5 +1,6 @@
 package com.Blog.Platform.Blog.ServiceImpl;
 
+import com.Blog.Platform.AiService.Service.AiService;
 import com.Blog.Platform.Blog.DTO.BlogPostRequest;
 import com.Blog.Platform.Blog.DTO.BlogPostResponse;
 import com.Blog.Platform.Blog.Exception.BlogCreationException;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class BlogServiceImpl implements BlogService {
     private final BlogPostMapper blogPostMapper;
     private final BlogPostRepository blogPostRepository;
     private final UserRepo userRepo;
+    private final AiService aiService;
 
 
     @Override
@@ -139,6 +142,7 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public BlogPostResponse publishBlog(UUID blogId) {
+
         User author = getCurrentUser();
 
         BlogPost blog = blogPostRepository
@@ -149,11 +153,16 @@ public class BlogServiceImpl implements BlogService {
             throw new BlogCreationException("Only DRAFT blogs can be published");
         }
 
+        // 🔥 AI-powered summary
+        String aiSummary = aiService.summarize(blog.getContent());
+
+        blog.setSummary(aiSummary);
         blog.setStatus(BlogStatus.PUBLISHED);
-        blog.setPublishedAt(java.time.LocalDateTime.now());
+        blog.setPublishedAt(LocalDateTime.now());
 
         return blogPostMapper.toResponse(blog);
     }
+
 
     /* ===================== DELETE ===================== */
 
