@@ -1,6 +1,8 @@
 package com.Blog.Platform.Blog.ServiceImpl;
 
+import com.Blog.Platform.AiService.Exception.AiLimitExceededException;
 import com.Blog.Platform.AiService.Service.AiService;
+import com.Blog.Platform.AiService.ServiceImpl.AsyncAiWorker;
 import com.Blog.Platform.Blog.DTO.BlogPostRequest;
 import com.Blog.Platform.Blog.DTO.BlogPostResponse;
 import com.Blog.Platform.Blog.Exception.BlogCreationException;
@@ -15,6 +17,7 @@ import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,13 +26,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional  @Slf4j
 public class BlogServiceImpl implements BlogService {
 
     private final BlogPostMapper blogPostMapper;
     private final BlogPostRepository blogPostRepository;
     private final UserRepo userRepo;
     private final AiService aiService;
+    private final AsyncAiWorker asyncAiWorker;
 
 
     @Override
@@ -153,15 +157,17 @@ public class BlogServiceImpl implements BlogService {
             throw new BlogCreationException("Only DRAFT blogs can be published");
         }
 
-        // 🔥 AI-powered summary
-        String aiSummary = aiService.summarize(blog.getContent());
-
-        blog.setSummary(aiSummary);
         blog.setStatus(BlogStatus.PUBLISHED);
         blog.setPublishedAt(LocalDateTime.now());
 
-        return blogPostMapper.toResponse(blog);
+        BlogPost saved = blogPostRepository.save(blog);
+
+        asyncAiWorker.generateSummary(saved.getId(), saved.getContent());
+
+        return blogPostMapper.toResponse(saved);
     }
+
+
 
 
     /* ===================== DELETE ===================== */
@@ -178,11 +184,22 @@ public class BlogServiceImpl implements BlogService {
     }
 
 
-    private User getCurrentUser() {
+    public User getCurrentUser() {
         String email = SecurityUtil.getCurrentUserEmai();
         return userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
+
+    @Override
+    public BlogPost getMyBlogEntity(UUID blogId) {
+
+        User author = getCurrentUser();
+
+        return blogPostRepository
+                .findByIdAndAuthor(blogId, author)
+                .orElseThrow(() -> new BlogCreationException("Blog not found"));
+    }
+
 
 }
 

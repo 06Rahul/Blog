@@ -3,6 +3,7 @@ package com.Blog.Platform.Blog.Service;
 import com.Blog.Platform.Blog.DTO.BlogPostRequest;
 import com.Blog.Platform.Blog.DTO.BlogPostResponse;
 
+import com.Blog.Platform.Blog.Model.BlogPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -35,4 +36,7 @@ public interface BlogService {
 
     // Delete
     void deleteMyBlog(UUID blogId);
+
+    BlogPost getMyBlogEntity(UUID blogId);
+
 }

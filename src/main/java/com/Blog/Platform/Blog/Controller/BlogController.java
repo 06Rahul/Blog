@@ -1,7 +1,9 @@
 package com.Blog.Platform.Blog.Controller;
 
+import com.Blog.Platform.AiService.ServiceImpl.AsyncAiWorker;
 import com.Blog.Platform.Blog.DTO.BlogPostRequest;
 import com.Blog.Platform.Blog.DTO.BlogPostResponse;
+import com.Blog.Platform.Blog.Model.BlogPost;
 import com.Blog.Platform.Blog.Service.BlogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +22,24 @@ import java.util.UUID;
 public class BlogController {
 
     private final BlogService blogService;
+    private final AsyncAiWorker asyncAiWorker;
+
+    @PostMapping("/{id}/generate-summary")
+    @PreAuthorize("hasAnyRole('AUTHOR','ADMIN')")
+    public ResponseEntity<Void> regenerateSummary(@PathVariable UUID id) {
+
+        BlogPost blog = blogService.getMyBlogEntity(id); // ownership check
+
+        asyncAiWorker.generateSummary(
+                blog.getId(),
+                blog.getContent()
+        );
+
+        return ResponseEntity.accepted().build();
+    }
 
     /* ===================== CREATE ===================== */
+
 
     @PostMapping
     @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")

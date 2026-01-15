@@ -12,4 +12,7 @@ public class UserProfileResponse {
     private String email;
     private String username;
     private String role;
+
+    private int aiUsedToday;
+    private int aiDailyLimit;
 }

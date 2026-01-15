@@ -1,5 +1,7 @@
 package com.Blog.Platform.User.Controller;
 
+import com.Blog.Platform.AiService.DTO.AiUsageResponse;
+import com.Blog.Platform.AiService.ServiceImpl.AiUsageService;
 import com.Blog.Platform.User.DTO.CustomUserDetails;
 import com.Blog.Platform.User.DTO.UserProfileResponse;
 import com.Blog.Platform.User.Model.User;
@@ -17,20 +19,25 @@ import java.util.Optional;
 public class UserQueryController {
 
     private final UserService userService;
+    private final AiUsageService aiUsageService;
 
     @GetMapping("/me")
-    public ResponseEntity<UserProfileResponse> me(
-            Authentication authentication
-    ) {
-        CustomUserDetails userDetails =
-                (CustomUserDetails) authentication.getPrincipal();
+    public ResponseEntity<UserProfileResponse> me(Authentication auth) {
+
+        CustomUserDetails user =
+                (CustomUserDetails) auth.getPrincipal();
+
+        AiUsageResponse usage =
+                aiUsageService.getTodayUsage();
 
         return ResponseEntity.ok(
                 new UserProfileResponse(
-                        userDetails.getId(),
-                        userDetails.getEmail(),
-                        userDetails.getUsername(),
-                        userDetails.getRole()
+                        user.getId(),
+                        user.getEmail(),
+                        user.getUsername(),
+                        user.getRole(),
+                        usage.getUsed(),
+                        usage.getLimit()
                 )
         );
     }
