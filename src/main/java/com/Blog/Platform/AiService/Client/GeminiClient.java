@@ -2,7 +2,7 @@ package com.Blog.Platform.AiService.Client;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -16,15 +16,15 @@ public class GeminiClient {
 
     private final WebClient webClient;
 
-    @Value("${ai.gemini.api-key}")
+    @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${ai.gemini.url}")
+    @Value("${gemini.api.base-url}")
     private String apiUrl;
 
     public String call(String prompt) {
 
-        Map<String, Object> requestBody = Map.of(
+        Map<String, Object> body = Map.of(
                 "contents", List.of(
                         Map.of(
                                 "parts", List.of(
@@ -35,47 +35,33 @@ public class GeminiClient {
         );
 
         try {
-            return webClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(apiUrl)
-                            .queryParam("key", apiKey)
-                            .build()
-                    )
-                    .bodyValue(requestBody)
+            Map response = webClient.post()
+                    .uri(apiUrl + "?key=" + apiKey)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(body)
                     .retrieve()
                     .bodyToMono(Map.class)
-                    .map(this::extractText)
                     .block();
 
-        } catch (WebClientResponseException ex) {
+            return extractText(response);
 
-            // 🔥 Gemini rate limit / quota exceeded
-            if (ex.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-                throw new RuntimeException(
-                        "AI quota exceeded. Please try again later."
-                );
-            }
-
-            // 🔥 Any other Gemini error
+        } catch (WebClientResponseException e) {
             throw new RuntimeException(
-                    "Gemini API error: " + ex.getResponseBodyAsString()
+                    "Gemini AI error " + e.getStatusCode() + ": " + e.getResponseBodyAsString(),
+                    e
             );
-
-        } catch (Exception ex) {
-            throw new RuntimeException(
-                    "Failed to connect to Gemini AI service"
-            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to connect to Gemini AI service", e);
         }
     }
 
     @SuppressWarnings("unchecked")
     private String extractText(Map<String, Object> response) {
-
         List<Map<String, Object>> candidates =
                 (List<Map<String, Object>>) response.get("candidates");
 
         if (candidates == null || candidates.isEmpty()) {
-            return "No response from Gemini";
+            return "No AI response";
         }
 
         Map<String, Object> content =
@@ -87,3 +73,4 @@ public class GeminiClient {
         return parts.get(0).get("text").toString();
     }
 }
+

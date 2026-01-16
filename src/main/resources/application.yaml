@@ -33,7 +33,7 @@ server:
 
 app:
   storage:
-    image-dir: E:/Java/user-images/
+    image-dir: ./user-images/
 jwt:
   secret: veryStrongSecretKeyChangeLater1452369871zcvbnm,asdfghjkl;'][poiuytrewqQWEDFGHJNM<VBJKOPUJKMTRFGBWEDCVBOIKL<POLKAWSEDRFYGUHJ
   expiration: 86400000
@@ -41,5 +41,6 @@ jwt:
 
 gemini:
   api:
-    key: AIzaSyDQGkNa3CVBu8wWyini60uWkh-72IUQVw0
-    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    key: AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
+    # url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
+    base-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent

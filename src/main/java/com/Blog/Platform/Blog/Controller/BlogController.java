@@ -86,6 +86,13 @@ public class BlogController {
         return ResponseEntity.ok(blogService.getPublishedBlogs(pageable));
     }
 
+    @GetMapping("/published/{blogId}")
+    public ResponseEntity<BlogPostResponse> getPublishedBlogById(
+            @PathVariable UUID blogId
+    ) {
+        return ResponseEntity.ok(blogService.getPublishedBlogById(blogId));
+    }
+
     /* ===================== UPDATE ===================== */
 
     @PutMapping("/{blogId}")

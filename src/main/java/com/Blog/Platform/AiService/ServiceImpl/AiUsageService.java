@@ -79,10 +79,10 @@ public class AiUsageService {
         }
 
         return switch (feature) {
-            case SUMMARY -> 2;
-            case GRAMMAR -> 5;
-            case ENHANCE -> 3;
-            case TITLE -> 5;
+            case SUMMARY -> 20;
+            case GRAMMAR -> 50;
+            case ENHANCE -> 30;
+            case TITLE -> 50;
             default -> 0;
         };
     }
@@ -91,7 +91,7 @@ public class AiUsageService {
         if (user.getRole() == Role.ADMIN) {
             return Integer.MAX_VALUE;
         }
-        return 10;
+        return 1000;
     }
 
     private User getCurrentUser() {

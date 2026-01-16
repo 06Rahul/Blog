@@ -28,6 +28,8 @@ public interface BlogService {
 
     Page<BlogPostResponse> getPublishedBlogs(Pageable pageable);
 
+    BlogPostResponse getPublishedBlogById(UUID blogId);
+
     // Update
     BlogPostResponse updateDraft(UUID blogId, BlogPostRequest request);
 
