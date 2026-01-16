@@ -107,6 +107,19 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public BlogPostResponse getPublishedBlogById(UUID blogId) {
+        BlogPost blog = blogPostRepository
+                .findById(blogId)
+                .orElseThrow(() -> new BlogCreationException("Blog not found"));
+
+        if (blog.getStatus() != BlogStatus.PUBLISHED) {
+            throw new BlogCreationException("Blog is not published");
+        }
+
+        return blogPostMapper.toResponse(blog);
+    }
+
+    @Override
     public BlogPostResponse getMyBlogById(UUID blogId) {
         User author = getCurrentUser();
 

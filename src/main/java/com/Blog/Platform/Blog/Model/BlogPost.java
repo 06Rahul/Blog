@@ -4,7 +4,6 @@ import com.Blog.Platform.User.Model.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -21,12 +20,10 @@ public class BlogPost {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-// summary field
+    
+    // summary field
     @Column(columnDefinition = "TEXT")
     private String summary;
-
-    private LocalDateTime publishedAt;
-
 
     @Column(nullable = false, length = 200)
     private String title;
