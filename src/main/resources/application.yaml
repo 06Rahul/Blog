@@ -41,6 +41,6 @@ jwt:
 
 gemini:
   api:
-    key: AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
+    key: "apikey"
     # url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
     base-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
