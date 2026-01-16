@@ -47,7 +47,6 @@ public class BlogPost {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private LocalDateTime publishedAt;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

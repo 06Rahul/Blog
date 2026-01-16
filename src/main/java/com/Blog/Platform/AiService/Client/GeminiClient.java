@@ -16,10 +16,10 @@ public class GeminiClient {
 
     private final WebClient webClient;
 
-    @Value("${ai.gemini.api-key}")
+    @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${ai.gemini.url}")
+    @Value("${gemini.api.url}")
     private String apiUrl;
 
     public String call(String prompt) {
