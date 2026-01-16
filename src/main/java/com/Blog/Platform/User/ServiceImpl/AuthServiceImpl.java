@@ -58,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
 
         return new SignUpResponse(
                 savedUser.getId(),
-                savedUser.getUsername(),
+                savedUser.getActualUsername(),
                 savedUser.getEmail()
         );
     }

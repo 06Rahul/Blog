@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/blogs/search")
 @RequiredArgsConstructor
@@ -39,5 +41,13 @@ public class BlogSearchController {
             Pageable pageable
     ) {
         return blogService.searchByAuthor(username, pageable);
+    }
+
+    @GetMapping("/category")
+    public Page<BlogPostResponse> searchByCategory(
+            @RequestParam UUID id,
+            Pageable pageable
+    ) {
+        return blogService.searchByCategory(id, pageable);
     }
 }
