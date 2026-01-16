@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { LikeButton } from './LikeButton';
+import { CommentSection } from './CommentSection';
+import { ScrollProgress } from '../layout/ScrollProgress';
 import { blogService } from '../../services/blogService';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import parse from 'html-react-parser';
 import { useAuth } from '../../context/AuthContext';
 
 export const BlogView = () => {
@@ -69,7 +73,8 @@ export const BlogView = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <article className="bg-white rounded-lg shadow-md p-8">
+      <ScrollProgress />
+      <article className="bg-white rounded-lg shadow-md p-8 relative">
         {isOwner && (
           <div className="flex justify-end gap-2 mb-4">
             <Link
@@ -95,27 +100,36 @@ export const BlogView = () => {
           )}
 
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-            <span className="font-semibold text-gray-900">
-              By {blog.author?.username || 'Unknown'}
+            <span className="font-semibold text-gray-900 flex items-center gap-2">
+              {blog.authorProfileImageUrl && (
+                <img
+                  src={blog.authorProfileImageUrl}
+                  alt={blog.authorUsername}
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              )}
+              <Link to={`/profile/${blog.authorUsername}`} className="hover:underline text-primary-600">
+                {blog.authorUsername || 'Unknown'}
+              </Link>
             </span>
             {blog.publishedAt && (
               <span>{format(new Date(blog.publishedAt), 'MMMM d, yyyy')}</span>
             )}
-            {blog.category && (
+            {blog.categoryName && (
               <span className="px-2 py-1 bg-gray-100 rounded">
-                {blog.category.name}
+                {blog.categoryName}
               </span>
             )}
           </div>
 
           {blog.tags && blog.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {blog.tags.map((tag) => (
+              {blog.tags.map((tag, index) => (
                 <span
-                  key={tag.id}
+                  key={index}
                   className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
                 >
-                  #{tag.name}
+                  #{tag}
                 </span>
               ))}
             </div>
@@ -123,13 +137,17 @@ export const BlogView = () => {
         </header>
 
         <div className="prose max-w-none">
-          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-            {blog.content}
+          <div className="text-gray-800 leading-relaxed ql-editor">
+            {parse(blog.content)}
           </div>
         </div>
 
-        <footer className="mt-12 pt-8 border-t border-gray-200">
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between py-6 border-t border-gray-100 mt-8">
+          <LikeButton blogId={id} />
+        </div>
+
+        <footer className="pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-8">
             <div>
               <p className="text-sm text-gray-500">
                 {blog.status === 'PUBLISHED' ? 'Published' : 'Draft'}
@@ -153,6 +171,7 @@ export const BlogView = () => {
             )}
           </div>
         </footer>
+        <CommentSection blogId={id} />
       </article>
     </div>
   );

@@ -24,9 +24,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
-@Transactional  @Slf4j
+@Transactional
+@Slf4j
 public class BlogServiceImpl implements BlogService {
 
     private final BlogPostMapper blogPostMapper;
@@ -34,7 +36,8 @@ public class BlogServiceImpl implements BlogService {
     private final UserRepo userRepo;
     private final AiService aiService;
     private final AsyncAiWorker asyncAiWorker;
-
+    private final com.Blog.Platform.Blog.Repo.TagRepository tagRepository;
+    private final com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository;
 
     @Override
     public Page<BlogPostResponse> searchByTitle(String title, Pageable pageable) {
@@ -58,6 +61,12 @@ public class BlogServiceImpl implements BlogService {
                 .map(blogPostMapper::toResponse);
     }
 
+    @Override
+    public Page<BlogPostResponse> searchByCategory(UUID categoryId, Pageable pageable) {
+        return blogPostRepository
+                .findByCategoryId(categoryId, pageable)
+                .map(blogPostMapper::toResponse);
+    }
 
     @Override
     public BlogPostResponse createBlog(BlogPostRequest request) {
@@ -76,6 +85,28 @@ public class BlogServiceImpl implements BlogService {
         blogPost.setTitle(request.getTitle());
         blogPost.setContent(request.getContent());
         blogPost.setStatus(BlogStatus.DRAFT);
+
+        // Handle tags
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            java.util.Set<com.Blog.Platform.Blog.Model.Tag> tags = new java.util.HashSet<>();
+            for (String tagName : request.getTags()) {
+                com.Blog.Platform.Blog.Model.Tag tag = tagRepository.findByNameIgnoreCase(tagName)
+                        .orElseGet(() -> {
+                            com.Blog.Platform.Blog.Model.Tag newTag = new com.Blog.Platform.Blog.Model.Tag();
+                            newTag.setName(tagName);
+                            return tagRepository.save(newTag);
+                        });
+                tags.add(tag);
+            }
+            blogPost.setTags(tags);
+        }
+
+        // Handle category
+        if (request.getCategoryId() != null) {
+            com.Blog.Platform.Blog.Model.Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new BlogCreationException("Category not found"));
+            blogPost.setCategory(category);
+        }
 
         BlogPost savedBlog = blogPostRepository.save(blogPost);
         return blogPostMapper.toResponse(savedBlog);
@@ -140,10 +171,6 @@ public class BlogServiceImpl implements BlogService {
                 .findByIdAndAuthor(blogId, author)
                 .orElseThrow(() -> new BlogCreationException("Blog not found"));
 
-        if (blog.getStatus() != BlogStatus.DRAFT) {
-            throw new BlogCreationException("Only DRAFT blogs can be updated");
-        }
-
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
             blog.setTitle(request.getTitle());
         }
@@ -152,7 +179,30 @@ public class BlogServiceImpl implements BlogService {
             blog.setContent(request.getContent());
         }
 
-        return blogPostMapper.toResponse(blog);
+        // Handle tags update
+        if (request.getTags() != null) {
+            java.util.Set<com.Blog.Platform.Blog.Model.Tag> tags = new java.util.HashSet<>();
+            for (String tagName : request.getTags()) {
+                com.Blog.Platform.Blog.Model.Tag tag = tagRepository.findByNameIgnoreCase(tagName)
+                        .orElseGet(() -> {
+                            com.Blog.Platform.Blog.Model.Tag newTag = new com.Blog.Platform.Blog.Model.Tag();
+                            newTag.setName(tagName);
+                            return tagRepository.save(newTag);
+                        });
+                tags.add(tag);
+            }
+            blog.setTags(tags);
+        }
+
+        // Handle category update
+        if (request.getCategoryId() != null) {
+            com.Blog.Platform.Blog.Model.Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new BlogCreationException("Category not found"));
+            blog.setCategory(category);
+        }
+
+        BlogPost saved = blogPostRepository.save(blog);
+        return blogPostMapper.toResponse(saved);
     }
 
     /* ===================== PUBLISH ===================== */
@@ -173,15 +223,12 @@ public class BlogServiceImpl implements BlogService {
         blog.setStatus(BlogStatus.PUBLISHED);
         blog.setPublishedAt(LocalDateTime.now());
 
-        BlogPost saved = blogPostRepository.save(blog);
+        BlogPost saved = blogPostRepository.saveAndFlush(blog);
 
         asyncAiWorker.generateSummary(saved.getId(), saved.getContent());
 
         return blogPostMapper.toResponse(saved);
     }
-
-
-
 
     /* ===================== DELETE ===================== */
 
@@ -196,9 +243,8 @@ public class BlogServiceImpl implements BlogService {
         blogPostRepository.delete(blog);
     }
 
-
     public User getCurrentUser() {
-        String email = SecurityUtil.getCurrentUserEmai();
+        String email = SecurityUtil.getCurrentUserEmail();
         return userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
@@ -213,6 +259,4 @@ public class BlogServiceImpl implements BlogService {
                 .orElseThrow(() -> new BlogCreationException("Blog not found"));
     }
 
-
 }
-

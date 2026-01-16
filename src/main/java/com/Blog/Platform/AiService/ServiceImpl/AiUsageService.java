@@ -44,8 +44,7 @@ public class AiUsageService {
 
         if (usage.getCount() >= limit) {
             throw new AiLimitExceededException(
-                    feature + " AI limit exceeded"
-            );
+                    feature + " AI limit exceeded");
         }
 
         usage.setCount(usage.getCount() + 1);
@@ -67,8 +66,7 @@ public class AiUsageService {
         return new AiUsageResponse(
                 used,
                 limit,
-                Math.max(limit - used, 0)
-        );
+                Math.max(limit - used, 0));
     }
 
     /* ===================== HELPERS ===================== */
@@ -95,7 +93,7 @@ public class AiUsageService {
     }
 
     private User getCurrentUser() {
-        String email = SecurityUtil.getCurrentUserEmai();
+        String email = SecurityUtil.getCurrentUserEmail();
         return userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }

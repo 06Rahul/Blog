@@ -14,14 +14,20 @@ public class BlogPostResponse {
     private UUID id;
     private String title;
     private String content;
-    private String summary;      // ✅ ADD THIS
+    private String summary;
+
     private BlogStatus status;
 
     // Flattened author info
     private UUID authorId;
     private String authorUsername;
+    private String authorProfileImageUrl;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime publishedAt;
+
+    // Tags and Category
+    private java.util.List<String> tags;
+    private String categoryName;
 }

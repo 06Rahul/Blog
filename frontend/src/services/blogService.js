@@ -91,6 +91,14 @@ export const blogService = {
     return response.data;
   },
 
+  // Search by category
+  searchByCategory: async (categoryId, page = 0, size = 10) => {
+    const response = await api.get('/blogs/search/category', {
+      params: { id: categoryId, page, size },
+    });
+    return response.data;
+  },
+
   // Get categories
   getCategories: async () => {
     const response = await api.get('/meta/categories');
@@ -100,6 +108,30 @@ export const blogService = {
   // Get tags
   getTags: async () => {
     const response = await api.get('/meta/tags');
+    return response.data;
+  },
+
+  // Engagement - Comments
+  getComments: async (blogId, page = 0, size = 10) => {
+    const response = await api.get(`/blogs/${blogId}/comments`, {
+      params: { page, size },
+    });
+    return response.data;
+  },
+
+  addComment: async (blogId, content) => {
+    const response = await api.post(`/blogs/${blogId}/comments`, { content });
+    return response.data;
+  },
+
+  // Engagement - Likes
+  toggleLike: async (blogId) => {
+    const response = await api.post(`/blogs/${blogId}/like`);
+    return response.data;
+  },
+
+  getLikeStatus: async (blogId) => {
+    const response = await api.get(`/blogs/${blogId}/likes`);
     return response.data;
   },
 };

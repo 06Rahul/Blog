@@ -116,7 +116,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getCurrentUser() {
-        String email = SecurityUtil.getCurrentUserEmai();
+        String email = SecurityUtil.getCurrentUserEmail();
         return userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
@@ -137,7 +137,6 @@ public class UserServiceImpl implements UserService {
                 user.isEmailVerified(),
                 user.isMobileVerified(),
                 usage.getUsed(),
-                usage.getLimit()
-        );
+                usage.getLimit());
     }
 }

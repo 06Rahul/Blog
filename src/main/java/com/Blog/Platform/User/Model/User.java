@@ -19,14 +19,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(
-        name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "email"),
-                @UniqueConstraint(columnNames = "username"),
-                @UniqueConstraint(columnNames = "mobileNumber")
-        }
-)
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "mobileNumber")
+})
 public class User implements UserDetails {
 
     @Id
@@ -40,7 +37,6 @@ public class User implements UserDetails {
     @JsonIgnore
     @Column(nullable = false, length = 100)
     private String password;
-
 
     @Size(min = 3, max = 50)
     @Column(nullable = false, length = 50)
@@ -61,10 +57,7 @@ public class User implements UserDetails {
     private String website;
 
     /* ===================== CONTACT ===================== */
-    @Pattern(
-            regexp = "^[6-9]\\d{9}$",
-            message = "Invalid Indian mobile number"
-    )
+    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid Indian mobile number")
     @Column(length = 10)
     private String mobileNumber;
 
@@ -86,6 +79,12 @@ public class User implements UserDetails {
 
     /** JPA requires this */
     public User() {
+    }
+
+    // Custom getter for the username field (not the UserDetails getUsername which
+    // returns email)
+    public String getActualUsername() {
+        return this.username;
     }
 
     @Override

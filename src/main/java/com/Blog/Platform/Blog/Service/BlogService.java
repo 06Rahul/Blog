@@ -15,6 +15,7 @@ public interface BlogService {
     Page<BlogPostResponse> searchByTitle(String title, Pageable pageable);
     Page<BlogPostResponse> searchByTag(String tag, Pageable pageable);
     Page<BlogPostResponse> searchByAuthor(String username, Pageable pageable);
+    Page<BlogPostResponse> searchByCategory(UUID categoryId, Pageable pageable);
 
 
     // Create
@@ -40,5 +41,7 @@ public interface BlogService {
     void deleteMyBlog(UUID blogId);
 
     BlogPost getMyBlogEntity(UUID blogId);
+
+
 
 }

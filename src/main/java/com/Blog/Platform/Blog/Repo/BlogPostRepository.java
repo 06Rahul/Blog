@@ -25,18 +25,23 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, UUID> {
     Optional<BlogPost> findByIdAndAuthor(UUID id, User author);
 
     Page<BlogPost> findByTitleContainingIgnoreCaseAndStatus(
-            String title, BlogStatus status, Pageable pageable );
+            String title, BlogStatus status, Pageable pageable);
 
     @Query("""
-    SELECT b FROM BlogPost b JOIN b.tags t WHERE LOWER(t.name) = LOWER(:tag) AND b.status = 'PUBLISHED' """)
+            SELECT b FROM BlogPost b JOIN b.tags t WHERE LOWER(t.name) = LOWER(:tag) AND b.status = com.Blog.Platform.Blog.Model.BlogStatus.PUBLISHED
+            """)
     Page<BlogPost> findByTag(String tag, Pageable pageable);
 
     @Query("""
-SELECT b FROM BlogPost b
-WHERE LOWER(b.author.username) = LOWER(:username)
-AND b.status = 'PUBLISHED'
-""")
+            SELECT b FROM BlogPost b
+            WHERE LOWER(b.author.username) = LOWER(:username)
+            AND b.status = com.Blog.Platform.Blog.Model.BlogStatus.PUBLISHED
+            """)
     Page<BlogPost> findByAuthorUsername(String username, Pageable pageable);
 
+    @Query("""
+            SELECT b FROM BlogPost b WHERE b.category.id = :categoryId AND b.status = com.Blog.Platform.Blog.Model.BlogStatus.PUBLISHED
+            """)
+    Page<BlogPost> findByCategoryId(UUID categoryId, Pageable pageable);
 
 }

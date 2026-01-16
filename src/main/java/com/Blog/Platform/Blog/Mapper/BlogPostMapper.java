@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 public class BlogPostMapper {
 
     public BlogPostResponse toResponse(BlogPost blog) {
+        // Use getActualUsername() since getUsername() returns email for Spring Security
+        String actualUsername = blog.getAuthor().getActualUsername();
+
         return new BlogPostResponse(
                 blog.getId(),
                 blog.getTitle(),
@@ -15,11 +18,17 @@ public class BlogPostMapper {
                 blog.getSummary(),
                 blog.getStatus(),
                 blog.getAuthor().getId(),
-                blog.getAuthor().getUsername(),
+                actualUsername, // The actual username field
+                blog.getAuthor().getProfileImageUrl(), // Profile image URL
                 blog.getCreatedAt(),
                 blog.getUpdatedAt(),
-                blog.getPublishedAt()
-        );
+                blog.getPublishedAt(),
+                // Convert tags to list of tag names
+                blog.getTags() != null
+                        ? blog.getTags().stream().map(tag -> tag.getName()).toList()
+                        : java.util.Collections.emptyList(),
+                // Get category name
+                blog.getCategory() != null ? blog.getCategory().getName() : null);
 
     }
 }

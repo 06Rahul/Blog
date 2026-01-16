@@ -1,19 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
 import { blogService } from '../../services/blogService';
 import { AIAssistant } from '../ai/AIAssistant';
 import toast from 'react-hot-toast';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import AnimatedQuillCaret from './AnimatedQuillCaret';
 
 export const BlogEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [tags, setTags] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [newTagInput, setNewTagInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAI, setShowAI] = useState(false);
+  const quillRef = useRef(null);
+  const [quillInstance, setQuillInstance] = useState(null);
+
+  useEffect(() => {
+    if (quillRef.current) {
+      setQuillInstance(quillRef.current.getEditor());
+    }
+  }, []);
 
   const {
     register,
@@ -21,12 +32,12 @@ export const BlogEditor = () => {
     formState: { errors },
     setValue,
     watch,
+    control,
   } = useForm({
     defaultValues: {
       title: '',
       content: '',
       categoryId: '',
-      tagIds: [],
     },
   });
 
@@ -41,12 +52,8 @@ export const BlogEditor = () => {
 
   const loadMetaData = async () => {
     try {
-      const [cats, tagList] = await Promise.all([
-        blogService.getCategories(),
-        blogService.getTags(),
-      ]);
+      const cats = await blogService.getCategories();
       setCategories(cats);
-      setTags(tagList);
     } catch (error) {
       console.error('Failed to load metadata:', error);
     }
@@ -57,14 +64,15 @@ export const BlogEditor = () => {
       const blog = await blogService.getMyBlogById(id);
       setValue('title', blog.title);
       setValue('content', blog.content);
-      if (blog.category) {
-        setSelectedCategory(blog.category.id);
-        setValue('categoryId', blog.category.id);
+      if (blog.categoryName) {
+        const category = categories.find(c => c.name === blog.categoryName);
+        if (category) {
+          setSelectedCategory(category.id);
+          setValue('categoryId', category.id);
+        }
       }
-      if (blog.tags) {
-        const tagIds = blog.tags.map((tag) => tag.id);
-        setSelectedTags(tagIds);
-        setValue('tagIds', tagIds);
+      if (blog.tags && blog.tags.length > 0) {
+        setSelectedTags(blog.tags);
       }
     } catch (error) {
       toast.error('Failed to load blog');
@@ -72,17 +80,25 @@ export const BlogEditor = () => {
     }
   };
 
-  const handleTagToggle = (tagId) => {
-    const newSelectedTags = selectedTags.includes(tagId)
-      ? selectedTags.filter((id) => id !== tagId)
-      : [...selectedTags, tagId];
-    setSelectedTags(newSelectedTags);
-    setValue('tagIds', newSelectedTags);
+  const handleAddTag = () => {
+    const trimmedTag = newTagInput.trim();
+    if (trimmedTag && !selectedTags.includes(trimmedTag)) {
+      setSelectedTags([...selectedTags, trimmedTag]);
+      setNewTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
   };
 
   const handleAIApply = (result) => {
     setValue('content', result);
     setShowAI(false);
+  };
+
+  const handleAISetTitle = (title) => {
+    setValue('title', title);
   };
 
   const onSubmit = async (data) => {
@@ -92,16 +108,17 @@ export const BlogEditor = () => {
         title: data.title,
         content: data.content,
         categoryId: data.categoryId || null,
-        tagIds: data.tagIds || [],
+        tags: selectedTags,
       };
 
       if (id) {
         await blogService.updateBlog(id, blogData);
         toast.success('Blog updated successfully!');
+        navigate('/dashboard');
       } else {
-        const newBlog = await blogService.createBlog(blogData);
+        await blogService.createBlog(blogData);
         toast.success('Blog created successfully!');
-        navigate(`/blogs/${newBlog.id}/edit`);
+        navigate('/dashboard');
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to save blog');
@@ -111,137 +128,184 @@ export const BlogEditor = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {id ? 'Edit Blog' : 'Create New Blog'}
-          </h1>
-          <button
-            type="button"
-            onClick={() => setShowAI(!showAI)}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              {id ? 'Edit Blog' : 'Create New Blog'}
+            </h1>
+            <p className="text-gray-400">Share your story with the world</p>
+          </div>
+          <Link
+            to="/ai"
+            className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
-            {showAI ? 'Hide' : 'Show'} AI Assistant
-          </button>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            Show AI Assistant
+          </Link>
         </div>
 
-        {showAI && (
-          <div className="mb-6">
-            <AIAssistant onApply={handleAIApply} initialContent={content} />
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-              Title *
-            </label>
-            <input
-              {...register('title', { required: 'Title is required' })}
-              type="text"
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              placeholder="Enter blog title..."
-            />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-2">
-              Category
-            </label>
-            <select
-              {...register('categoryId')}
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setValue('categoryId', e.target.value);
-              }}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => handleTagToggle(tag.id)}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    selectedTags.includes(tag.id)
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {tag.name}
-                </button>
-              ))}
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Title */}
+            <div>
+              <label htmlFor="title" className="block text-white font-semibold mb-2">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                {...register('title', { required: 'Title is required' })}
+                type="text"
+                placeholder="Enter blog title..."
+                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              />
+              {errors.title && (
+                <p className="mt-1 text-sm text-red-400">{errors.title.message}</p>
+              )}
             </div>
-          </div>
 
-          <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-              Content *
-            </label>
-            <textarea
-              {...register('content', { required: 'Content is required' })}
-              rows="20"
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 font-mono text-sm"
-              placeholder="Write your blog content here..."
-            />
-            {errors.content && (
-              <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
-            )}
-            <p className="mt-2 text-sm text-gray-500">
-              {content?.length || 0} characters
-            </p>
-          </div>
+            {/* Category */}
+            <div>
+              <label htmlFor="categoryId" className="block text-white font-semibold mb-2">
+                Category
+              </label>
+              <select
+                {...register('categoryId')}
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setValue('categoryId', e.target.value);
+                }}
+                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Saving...' : id ? 'Update Blog' : 'Create Blog'}
-            </button>
-            {id && (
+            {/* Tags */}
+            <div>
+              <label htmlFor="tags" className="block text-white font-semibold mb-2">
+                Tags
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Add a tag..."
+                  className="flex-1 px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              <p className="text-sm text-gray-400 mb-3">Press Enter or click Add to add a tag</p>
+              {selectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedTags.map((tag) => (
+                    <div
+                      key={tag}
+                      className="flex items-center gap-2 px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="hover:text-blue-300"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div>
+              <label htmlFor="content" className="block text-white font-semibold mb-2">
+                Content <span className="text-red-500">*</span>
+              </label>
+              <div className="bg-white rounded-xl overflow-hidden">
+                <ReactQuill
+                  ref={quillRef}
+                  theme="snow"
+                  value={watch('content')}
+                  onChange={(value) => setValue('content', value)}
+                  className="h-96 mb-12"
+                  placeholder="Write your blog content here..."
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, 3, false] }],
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                      ['link', 'blockquote', 'code-block'],
+                      ['clean']
+                    ]
+                  }}
+                />
+                <AnimatedQuillCaret quill={quillInstance} />
+              </div>
+              {errors.content && (
+                <p className="mt-1 text-sm text-red-400">{errors.content.message}</p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end pt-4">
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    await blogService.publishBlog(id);
-                    toast.success('Blog published successfully!');
-                    navigate('/dashboard');
-                  } catch (error) {
-                    toast.error('Failed to publish blog');
-                  }
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-3 border-2 border-slate-600 text-gray-300 hover:bg-slate-700 font-semibold rounded-xl transition-colors"
               >
-                Publish
+                Cancel
               </button>
-            )}
-          </div>
-        </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Saving...' : id ? 'Update Blog' : 'Create Blog'}
+              </button>
+              {id && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await blogService.publishBlog(id);
+                      toast.success('Blog published successfully!');
+                      navigate('/');
+                    } catch (error) {
+                      toast.error('Failed to publish blog');
+                    }
+                  }}
+                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                >
+                  Publish
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
