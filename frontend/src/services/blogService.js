@@ -43,6 +43,14 @@ export const blogService = {
     return response.data;
   },
 
+  // Get feed
+  getFeedBlogs: async (page = 0, size = 10) => {
+    const response = await api.get('/blogs/feed', {
+      params: { page, size },
+    });
+    return response.data;
+  },
+
   // Update blog
   updateBlog: async (blogId, blogData) => {
     const response = await api.put(`/blogs/${blogId}`, blogData);
@@ -132,6 +140,14 @@ export const blogService = {
 
   getLikeStatus: async (blogId) => {
     const response = await api.get(`/blogs/${blogId}/likes`);
+    return response.data;
+  },
+
+  // Unified Search
+  searchUnified: async (query, page = 0, size = 10) => {
+    const response = await api.get('/blogs/search/unified', {
+      params: { q: query, page, size },
+    });
     return response.data;
   },
 };

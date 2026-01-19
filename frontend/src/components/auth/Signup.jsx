@@ -74,17 +74,17 @@ export const Signup = () => {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
+          <h1 className="text-4xl font-serif text-gray-900 mb-2">
             Create Account
           </h1>
-          <p className="text-gray-400">Join our community of writers</p>
+          <p className="text-gray-500 font-serif italic">Join our community of writers</p>
         </div>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white border border-gray-100 p-8 shadow-sm">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Profile Image Upload */}
             <div className="flex flex-col items-center mb-6">
-              <label className="block text-white font-semibold mb-3 text-center">
+              <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 text-center">
                 Profile Picture (Optional)
               </label>
 
@@ -94,7 +94,7 @@ export const Signup = () => {
                     <img
                       src={imagePreview}
                       alt="Profile preview"
-                      className="w-24 h-24 rounded-full object-cover border-4 border-blue-500"
+                      className="w-24 h-24 rounded-full object-cover border-4 border-[#e4dfef]"
                     />
                     <button
                       type="button"
@@ -108,8 +108,8 @@ export const Signup = () => {
                   </div>
                 ) : (
                   <label className="cursor-pointer">
-                    <div className="w-24 h-24 rounded-full bg-slate-900 border-2 border-dashed border-slate-600 hover:border-blue-500 flex items-center justify-center transition-colors">
-                      <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-24 h-24 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 hover:border-black flex items-center justify-center transition-colors">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                     </div>
@@ -122,40 +122,40 @@ export const Signup = () => {
                   </label>
                 )}
               </div>
-              <p className="text-gray-500 text-xs mt-2">Max size: 5MB</p>
+              <p className="text-gray-400 text-xs mt-2 font-serif italic">Max size: 5MB</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-white font-semibold mb-2">
+                <label htmlFor="firstName" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                   First Name
                 </label>
                 <input
                   {...register('firstName', { required: 'First name is required' })}
                   type="text"
                   placeholder="John"
-                  className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 transition-colors rounded-none"
                 />
                 {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-400">{errors.firstName.message}</p>
+                  <p className="mt-1 text-sm text-red-500 font-serif italic">{errors.firstName.message}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-white font-semibold mb-2">
+                <label htmlFor="lastName" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                   Last Name
                 </label>
                 <input
                   {...register('lastName')}
                   type="text"
                   placeholder="Doe"
-                  className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 transition-colors rounded-none"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="username" className="block text-white font-semibold mb-2">
+              <label htmlFor="username" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                 Username
               </label>
               <input
@@ -165,15 +165,15 @@ export const Signup = () => {
                 })}
                 type="text"
                 placeholder="johndoe"
-                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 transition-colors rounded-none"
               />
               {errors.username && (
-                <p className="mt-1 text-sm text-red-400">{errors.username.message}</p>
+                <p className="mt-1 text-sm text-red-500 font-serif italic">{errors.username.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-white font-semibold mb-2">
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                 Email Address
               </label>
               <input
@@ -186,15 +186,15 @@ export const Signup = () => {
                 })}
                 type="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 transition-colors rounded-none"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-red-500 font-serif italic">{errors.email.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-white font-semibold mb-2">
+              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                 Password
               </label>
               <input
@@ -204,15 +204,15 @@ export const Signup = () => {
                 })}
                 type="password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 transition-colors rounded-none"
               />
               {errors.password && (
-                <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-red-500 font-serif italic">{errors.password.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-white font-semibold mb-2">
+              <label htmlFor="confirmPassword" className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                 Confirm Password
               </label>
               <input
@@ -222,17 +222,17 @@ export const Signup = () => {
                 })}
                 type="password"
                 placeholder="••••••••"
-                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 transition-colors rounded-none"
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-400">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-sm text-red-500 font-serif italic">{errors.confirmPassword.message}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-4 bg-[#e4dfef] hover:bg-[#d4cfe0] text-gray-900 text-xs font-bold uppercase tracking-widest transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -249,9 +249,9 @@ export const Signup = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p className="text-gray-400 font-serif italic">
               Already have an account?{' '}
-              <Link to="/login" className="text-blue-400 hover:text-blue-300 font-semibold">
+              <Link to="/login" className="text-black not-italic font-bold hover:underline">
                 Sign in
               </Link>
             </p>

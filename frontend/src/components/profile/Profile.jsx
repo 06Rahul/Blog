@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { userService } from '../../services/userService';
 import { aiService } from '../../services/aiService';
 import { ProfileEdit } from './ProfileEdit';
+import { FollowListModal } from './FollowListModal';
 import toast from 'react-hot-toast';
 
 export const Profile = () => {
@@ -10,10 +11,17 @@ export const Profile = () => {
   const [usage, setUsage] = useState(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [counts, setCounts] = useState({ followers: 0, following: 0 });
+  const [postCount, setPostCount] = useState(0);
+  const [modal, setModal] = useState({ open: false, type: 'followers' });
 
   useEffect(() => {
     loadUsage();
-  }, []);
+    if (user) {
+      loadCounts();
+      loadPostCount();
+    }
+  }, [user]);
 
   const loadUsage = async () => {
     try {
@@ -23,6 +31,29 @@ export const Profile = () => {
       console.error('Failed to load usage:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCounts = async () => {
+    try {
+      const { followService } = await import('../../services/followService');
+      const [followers, following] = await Promise.all([
+        followService.getFollowerCount(user.id),
+        followService.getFollowingCount(user.id)
+      ]);
+      setCounts({ followers, following });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadPostCount = async () => {
+    try {
+      const { blogService } = await import('../../services/blogService');
+      const data = await blogService.searchByAuthor(user.username, 0, 1);
+      setPostCount(data.totalElements || 0);
+    } catch (error) {
+      console.error('Failed to load post count', error);
     }
   };
 
@@ -49,165 +80,178 @@ export const Profile = () => {
     : 'Recently';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
+    <div className="min-h-screen bg-transparent p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">My Profile</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage your blogging profile and personal information</p>
+            <h1 className="text-4xl font-serif tracking-wide text-gray-900 mb-2">My Profile</h1>
+            <p className="text-gray-500 font-serif italic">Manage your blogging profile and personal information</p>
           </div>
           <button
             onClick={() => setEditing(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+            className="flex items-center gap-2 px-8 py-3 bg-[#e4dfef] hover:bg-[#d4cfe0] text-gray-900 text-xs font-bold tracking-widest uppercase rounded-none transition-all shadow-sm hover:shadow-md"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
             Edit Profile
           </button>
         </div>
 
         {/* Main Profile Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-0 p-8 mb-6">
-          <div className="flex flex-col md:flex-row gap-8">
+        <div className="bg-white border border-gray-100 p-12 mb-12 shadow-sm">
+          <div className="flex flex-col md:flex-row gap-12 items-start">
             {/* Avatar Section */}
-            <div className="flex flex-col items-center md:items-start">
+            <div className="flex flex-col items-center">
               {user?.profileImageUrl ? (
                 <img
                   src={user.profileImageUrl}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg mb-4"
+                  className="w-40 h-40 object-cover border border-gray-100 shadow-sm mb-6 rounded-full"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg mb-4">
+                <div className="w-40 h-40 bg-gray-50 flex items-center justify-center text-5xl font-serif text-gray-300 mb-6 border border-gray-100 rounded-full">
                   {user?.firstName?.[0] || user?.username?.[0] || 'U'}
                 </div>
               )}
-              <div className="flex flex-wrap gap-2 mb-2 justify-center md:justify-start">
+              <div className="flex flex-wrap gap-2 justify-center">
                 {!user?.emailVerified && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
-                    ⚠️ Pending Verification
+                  <span className="inline-flex items-center gap-1 px-3 py-1 border border-yellow-200 bg-yellow-50 text-yellow-700 text-xxs font-bold uppercase tracking-wider">
+                    Pending
                   </span>
                 )}
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
+                <span className="inline-flex items-center px-3 py-1 border border-[#d4cfe0] bg-[#e4dfef] text-gray-800 text-xxs font-bold uppercase tracking-wider">
                   {user?.role}
                 </span>
               </div>
             </div>
 
             {/* Info Section */}
-            <div className="flex-1">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+            <div className="flex-1 w-full">
+              <h2 className="text-4xl font-serif text-gray-900 mb-2">
                 {user?.firstName} {user?.lastName}
               </h2>
+              <p className="text-gray-400 font-serif italic text-lg mb-8">@{user?.username}</p>
 
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span>@{user?.username}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <span>{user?.email}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-sm text-gray-500 tracking-wide">
+                <div className="flex items-center gap-3">
+                  <span className="uppercase text-xs font-bold text-gray-300 w-16">Email</span>
+                  <span className="text-gray-900">{user?.email}</span>
                 </div>
                 {user?.mobileNumber && (
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span>{user.mobileNumber}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="uppercase text-xs font-bold text-gray-300 w-16">Phone</span>
+                    <span className="text-gray-900">{user.mobileNumber}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>Member since {memberSince}</span>
+                <div className="flex items-center gap-3">
+                  <span className="uppercase text-xs font-bold text-gray-300 w-16">Joined</span>
+                  <span className="text-gray-900">{memberSince}</span>
                 </div>
               </div>
 
               {user?.bio && (
-                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border-l-4 border-purple-500 italic text-gray-700 dark:text-gray-300">
+                <div className="bg-[#fcfcff] p-6 border-l-2 border-[#e4dfef] italic text-gray-600 font-serif leading-relaxed mb-8">
                   "{user.bio}"
                 </div>
               )}
+
+              {/* Stats Section */}
+              <div className="flex gap-12 border-t border-gray-100 pt-8">
+                <button
+                  onClick={() => setModal({ open: true, type: 'followers' })}
+                  className="text-center group hover:opacity-70 transition-opacity"
+                >
+                  <span className="block text-3xl font-serif text-gray-900 mb-1 group-hover:text-[#9f96b8] transition-colors">{counts.followers}</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Followers</span>
+                </button>
+                <button
+                  onClick={() => setModal({ open: true, type: 'following' })}
+                  className="text-center group hover:opacity-70 transition-opacity"
+                >
+                  <span className="block text-3xl font-serif text-gray-900 mb-1 group-hover:text-[#9f96b8] transition-colors">{counts.following}</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Following</span>
+                </button>
+                <div className="text-center">
+                  <span className="block text-3xl font-serif text-gray-900 mb-1">{postCount}</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Posts</span>
+                </div>
+              </div>
+
+              {/* Modal */}
+              <FollowListModal
+                isOpen={modal.open}
+                onClose={() => setModal(prev => ({ ...prev, open: false }))}
+                type={modal.type}
+                userId={user?.id}
+              />
+
             </div>
           </div>
         </div>
 
         {/* Website Section */}
         {user?.website && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-0 p-8 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </svg>
+          <div className="bg-white border border-gray-100 p-8 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+            <div className="flex items-center gap-6">
+              <div className="w-12 h-12 bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">My Website</h3>
-            </div>
-            <div className="h-px bg-gray-200 dark:bg-gray-700 mb-4"></div>
-            <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Personal Website</div>
-                  <a
-                    href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-                  >
-                    {user.website}
-                  </a>
-                </div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900 mb-1">Website</h3>
+                <a
+                  href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-serif text-gray-500 hover:text-[#9f96b8] transition-colors italic"
+                >
+                  {user.website}
+                </a>
               </div>
-              <a
-                href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-colors"
-              >
-                Visit Site
-              </a>
             </div>
+            <a
+              href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-2 border border-gray-200 text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-[#e4dfef] hover:border-[#e4dfef] hover:text-black transition-colors"
+            >
+              Visit Site
+            </a>
           </div>
         )}
 
         {/* AI Usage Stats */}
         {usage && (
-          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 rounded-2xl shadow-lg border-0 p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">⚡</span>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI Usage Stats</h3>
+          <div className="bg-white border border-gray-100 p-8 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5">
+              <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
-            <div className="h-px bg-gray-200 dark:bg-gray-700 mb-4"></div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-              <div className="flex items-end justify-between mb-2">
-                <div>
-                  <span className="text-5xl font-bold text-blue-600 dark:text-blue-400">{usage.used}</span>
-                  <span className="text-gray-500 dark:text-gray-400 ml-2">/ {usage.limit} requests</span>
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="w-12 h-12 bg-gray-50 flex items-center justify-center text-violet-500 border border-gray-100">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
-                  Today's Limit
-                </span>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-gray-900 mb-1">AI Usage</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-serif text-gray-900">{usage.used}</span>
+                    <span className="text-sm text-gray-400 font-serif italic">/ {usage.limit} requests</span>
+                  </div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
-                <div
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000"
-                  style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }}
-                ></div>
+
+              <div className="flex-1 w-full max-w-md">
+                <div className="flex justify-between text-xxs font-bold uppercase tracking-widest text-gray-400 mb-2">
+                  <span>Daily Limit</span>
+                  <span>{Math.round((usage.used / usage.limit) * 100)}%</span>
+                </div>
+                <div className="w-full bg-gray-100 h-1.5">
+                  <div
+                    className="bg-[#e4dfef] h-1.5 transition-all duration-1000"
+                    style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xxs text-gray-300 uppercase tracking-wider mt-2 text-right">Resets daily at midnight UTC</p>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                Resets daily at midnight UTC
-              </p>
             </div>
           </div>
         )}

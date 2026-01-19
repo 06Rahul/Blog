@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { BlogList } from '../components/blog/BlogList';
 import { blogService } from '../services/blogService';
+import { useAuth } from '../context/AuthContext';
+import { Sidebar } from '../components/layout/Sidebar';
 
 export const Home = () => {
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const selectedCategory = searchParams.get('category');
+  const searchQuery = searchParams.get('q');
+  const initialFeedType = searchParams.get('feed') || 'latest';
+
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [feedType, setFeedType] = useState(initialFeedType);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 10;
@@ -14,10 +23,10 @@ export const Home = () => {
     loadCategories();
   }, []);
 
-  // Reset page when category changes
+  // Reset page when key filters change
   useEffect(() => {
     setPage(0);
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery, feedType]);
 
   const loadCategories = async () => {
     try {
@@ -35,99 +44,119 @@ export const Home = () => {
     }
   };
 
+  const handleFilterChange = (type, categoryId = null) => {
+    const params = {};
+    if (type !== 'latest') params.feed = type;
+    if (categoryId) params.category = categoryId;
+    setSearchParams(params);
+    setFeedType(type);
+  };
+
+  const getListType = () => {
+    if (searchQuery) return 'search';
+    if (selectedCategory) return 'category';
+    if (feedType === 'following') return 'feed';
+    return 'published';
+  };
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-16 text-center">
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-4">
-            Welcome to Blog Platform
-          </h1>
-          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            Share your thoughts, ideas, and stories with the world. A platform designed for creators and readers alike.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              to="/blogs/new"
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              Start Writing
-            </Link>
-            <Link
-              to="/search"
-              className="px-8 py-3 border-2 border-blue-600 text-blue-400 hover:bg-blue-900/20 font-semibold rounded-lg transition-all"
-            >
-              Explore Blogs
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-blue-50">
 
-      {/* Latest Blogs Section */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <h2 className="text-3xl font-bold text-white">
-            {selectedCategory
-              ? `${categories.find(c => c.id === selectedCategory)?.name} Blogs`
-              : 'Latest Blogs'
-            }
-          </h2>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${!selectedCategory
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
-                }`}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${selectedCategory === cat.id
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
-                  }`}
-              >
-                {cat.name}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+
+        {/* Main Content Area */}
+        <div className="col-span-12 md:col-span-8">
+
+          {/* Minimalist Filter Bar */}
+          {!searchQuery && (
+            <div className="flex flex-col md:flex-row justify-between items-end border-b border-gray-100 pb-4 mb-12">
+              <h2 className="text-xl font-serif tracking-widest uppercase text-gray-900">
+                {selectedCategory
+                  ? categories.find(c => c.id === selectedCategory)?.name
+                  : feedType === 'following' ? 'Following' : 'Latest Stories'
+                }
+              </h2>
+
+              <div className="flex gap-6 text-xs font-bold tracking-widest uppercase text-gray-400 mt-4 md:mt-0">
+                <button
+                  onClick={() => handleFilterChange('latest')}
+                  className={`hover:text-black transition-colors ${feedType === 'latest' && !selectedCategory ? 'text-black border-b-2 border-black pb-1' : ''}`}
+                >
+                  All
+                </button>
+                {user && (
+                  <button
+                    onClick={() => handleFilterChange('following')}
+                    className={`hover:text-black transition-colors ${feedType === 'following' ? 'text-black border-b-2 border-black pb-1' : ''}`}
+                  >
+                    Following
+                  </button>
+                )}
+                {categories.slice(0, 4).map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleFilterChange('latest', cat.id)}
+                    className={`hover:text-black transition-colors ${selectedCategory === cat.id ? 'text-black border-b-2 border-black pb-1' : ''}`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {searchQuery && (
+            <div className="mb-12 border-b border-gray-100 pb-4">
+              <h2 className="text-xl font-serif text-gray-900">
+                Search Results for <span className="italic">"{searchQuery}"</span>
+              </h2>
+              <button onClick={() => setSearchParams({})} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-red-500 mt-2">
+                Clear Search
               </button>
-            ))}
-          </div>
+            </div>
+          )}
+
+          <BlogList
+            type={getListType()}
+            categoryId={selectedCategory}
+            searchQuery={searchQuery}
+            page={page}
+            size={pageSize}
+            onDataLoaded={(data) => setTotalPages(data.totalPages)}
+          />
+
+          {/* Minimalist Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-8 mt-16 text-xs font-bold tracking-widest uppercase">
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 0}
+                className="hover:text-black text-gray-400 disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+              >
+                &larr; Newer Posts
+              </button>
+              <span className="text-black">
+                Page {page + 1} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages - 1}
+                className="hover:text-black text-gray-400 disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+              >
+                Older Posts &rarr;
+              </button>
+            </div>
+          )}
         </div>
 
-        <BlogList
-          type={selectedCategory ? 'category' : 'published'}
-          categoryId={selectedCategory}
-          page={page}
-          size={pageSize}
-          onDataLoaded={(data) => setTotalPages(data.totalPages)}
-        />
+        {/* Right Sidebar */}
+        <div className="hidden md:block md:col-span-4 pl-8 border-l border-gray-100">
+          <Sidebar categories={categories} />
+        </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 0}
-              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
-            >
-              Previous
-            </button>
-            <span className="text-gray-400">
-              Page {page + 1} of {totalPages}
-            </span>
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages - 1}
-              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
 };
+
+

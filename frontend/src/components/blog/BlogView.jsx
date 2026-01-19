@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { LikeButton } from './LikeButton';
 import { CommentSection } from './CommentSection';
+import { SaveButton } from './SaveButton';
 import { ScrollProgress } from '../layout/ScrollProgress';
 import { blogService } from '../../services/blogService';
 import { format } from 'date-fns';
@@ -143,7 +144,10 @@ export const BlogView = () => {
         </div>
 
         <div className="flex items-center justify-between py-6 border-t border-gray-100 mt-8">
-          <LikeButton blogId={id} />
+          <div className="flex items-center gap-4">
+            <LikeButton blogId={id} />
+            <SaveButton blogId={id} />
+          </div>
         </div>
 
         <footer className="pt-6 border-t border-gray-200">

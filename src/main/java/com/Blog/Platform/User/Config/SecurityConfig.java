@@ -51,7 +51,11 @@ public class SecurityConfig {
                                 "/api/users/username/**",
                                 "/api/blogs/search/**",
                                 "/api/blogs/published/**",
-                                "/api/blogs/published")
+                                "/api/blogs/published",
+                                "/api/users/*/followers",
+                                "/api/users/*/following",
+                                "/api/users/*/followers/count",
+                                "/api/users/*/following/count")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter,

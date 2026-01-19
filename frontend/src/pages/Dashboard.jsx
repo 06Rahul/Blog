@@ -6,46 +6,59 @@ export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('drafts');
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
-            <p className="text-gray-400">Manage your blog posts</p>
+    <div className="min-h-screen transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-gray-100 pb-8">
+          <div className="text-center md:text-left mb-6 md:mb-0">
+            <h1 className="text-3xl font-serif text-gray-900 mb-2">My Dashboard</h1>
+            <p className="text-sm font-sans text-gray-400 tracking-wide uppercase">Manage your stories</p>
           </div>
           <Link
             to="/blogs/new"
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+            className="px-6 py-3 border border-black text-xs font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all"
           >
-            Create New Blog
+            Create New Story
           </Link>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6">
-          <div className="flex gap-2 bg-slate-800 border border-slate-700 p-1 rounded-lg inline-flex">
+        <div className="mb-12 flex justify-center md:justify-start">
+          <div className="flex gap-8 text-xs font-bold tracking-widest uppercase text-gray-400">
             <button
               onClick={() => setActiveTab('published')}
-              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'published'
-                  ? 'bg-slate-700 text-white'
-                  : 'text-gray-400 hover:text-white'
+              className={`pb-2 transition-all ${activeTab === 'published'
+                ? 'text-black border-b-2 border-black'
+                : 'hover:text-black'
                 }`}
             >
               Published
             </button>
             <button
               onClick={() => setActiveTab('drafts')}
-              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'drafts'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+              className={`pb-2 transition-all ${activeTab === 'drafts'
+                ? 'text-black border-b-2 border-black'
+                : 'hover:text-black'
                 }`}
             >
               Drafts
             </button>
+            <button
+              onClick={() => setActiveTab('saved')}
+              className={`pb-2 transition-all ${activeTab === 'saved'
+                ? 'text-black border-b-2 border-black'
+                : 'hover:text-black'
+                }`}
+            >
+              Saved
+            </button>
           </div>
         </div>
 
-        <BlogList type={activeTab === 'published' ? 'my-published' : 'drafts'} />
+        <BlogList type={
+          activeTab === 'published' ? 'my-published'
+            : activeTab === 'drafts' ? 'drafts'
+              : 'saved' // saved
+        } />
       </div>
     </div>
   );
