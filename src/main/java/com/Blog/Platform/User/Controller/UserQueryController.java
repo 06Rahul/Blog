@@ -23,77 +23,86 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserQueryController {
 
-    private final UserService userService;
-    private final AiUsageService aiUsageService;
+        private final UserService userService;
+        private final AiUsageService aiUsageService;
 
-    @GetMapping("/me")
-    public ResponseEntity<UserProfileResponse> me(Authentication auth) {
-        // Get full user entity to include all profile fields
-        CustomUserDetails userDetails =
-                (CustomUserDetails) auth.getPrincipal();
-        
-        User user = userService.findById(userDetails.getId())
-                .orElseThrow(() -> new com.Blog.Platform.User.Excepction.UserNotFoundException("User not found"));
+        @GetMapping("/me")
+        public ResponseEntity<UserProfileResponse> me(Authentication auth) {
+                // Get full user entity to include all profile fields
+                CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 
-        AiUsageResponse usage =
-                aiUsageService.getTodayUsage();
+                User user = userService.findById(userDetails.getId())
+                                .orElseThrow(() -> new com.Blog.Platform.User.Excepction.UserNotFoundException(
+                                                "User not found"));
 
-        return ResponseEntity.ok(
-                new UserProfileResponse(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getUsername(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        user.getBio(),
-                        user.getWebsite(),
-                        user.getMobileNumber(),
-                        user.getProfileImageUrl(),
-                        user.getRole().name(),
-                        user.isEmailVerified(),
-                        user.isMobileVerified(),
-                        usage.getUsed(),
-                        usage.getLimit()
-                )
-        );
-    }
+                AiUsageResponse usage = aiUsageService.getTodayUsage();
 
+                return ResponseEntity.ok(
+                                new UserProfileResponse(
+                                                user.getId(),
+                                                user.getEmail(),
+                                                user.getUsername(),
+                                                user.getFirstName(),
+                                                user.getLastName(),
+                                                user.getBio(),
+                                                user.getWebsite(),
+                                                user.getMobileNumber(),
+                                                user.getProfileImageUrl(),
+                                                user.getRole().name(),
+                                                user.isEmailVerified(),
+                                                user.isMobileVerified(),
+                                                usage.getUsed(),
+                                                usage.getLimit()));
+        }
 
-    @GetMapping("/username/{username}")
-    public ResponseEntity<User> getByUsername(@PathVariable String username) {
+        @GetMapping("/username/{username}")
+        public ResponseEntity<com.Blog.Platform.User.DTO.PublicUserProfileResponse> getByUsername(
+                        @PathVariable String username) {
 
-        Optional<User> user = userService.findByUsername(username);
+                Optional<User> userOptional = userService.findByUsername(username);
 
-        return user
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+                if (userOptional.isPresent()) {
+                        User user = userOptional.get();
+                        com.Blog.Platform.User.DTO.PublicUserProfileResponse response = com.Blog.Platform.User.DTO.PublicUserProfileResponse
+                                        .builder()
+                                        .id(user.getId())
+                                        .username(user.getActualUsername())
+                                        .firstName(user.getFirstName())
+                                        .lastName(user.getLastName())
+                                        .bio(user.getBio())
+                                        .profileImageUrl(user.getProfileImageUrl())
+                                        .website(user.getWebsite())
+                                        .role(user.getRole() != null ? user.getRole().name() : "USER")
+                                        .build();
+                        return ResponseEntity.ok(response);
+                }
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<User> getByEmail(@PathVariable String email) {
+                return ResponseEntity.notFound().build();
+        }
 
-        Optional<User> user = userService.findByEmail(email);
+        @GetMapping("/email/{email}")
+        public ResponseEntity<User> getByEmail(@PathVariable String email) {
 
-        return user
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+                Optional<User> user = userService.findByEmail(email);
 
-    /* ===================== PROFILE UPDATE ===================== */
+                return user
+                                .map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build());
+        }
 
-    @PutMapping("/me")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserProfileResponse> updateProfile(
-            @Valid @RequestBody ProfileUpdateRequest request
-    ) {
-        return ResponseEntity.ok(userService.updateProfile(request));
-    }
+        /* ===================== PROFILE UPDATE ===================== */
 
-    @PutMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserProfileResponse> updateProfileImage(
-            @RequestParam("image") MultipartFile image
-    ) {
-        return ResponseEntity.ok(userService.updateProfileImage(image));
-    }
+        @PutMapping("/me")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UserProfileResponse> updateProfile(
+                        @Valid @RequestBody ProfileUpdateRequest request) {
+                return ResponseEntity.ok(userService.updateProfile(request));
+        }
+
+        @PutMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UserProfileResponse> updateProfileImage(
+                        @RequestParam("image") MultipartFile image) {
+                return ResponseEntity.ok(userService.updateProfileImage(image));
+        }
 }

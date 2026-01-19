@@ -119,8 +119,8 @@ export const blogService = {
     return response.data;
   },
 
-  addComment: async (blogId, content) => {
-    const response = await api.post(`/blogs/${blogId}/comments`, { content });
+  addComment: async (blogId, content, parentId = null) => {
+    const response = await api.post(`/blogs/${blogId}/comments`, { content, parentId });
     return response.data;
   },
 

@@ -17,7 +17,7 @@ export const BlogSearch = () => {
     setLoading(true);
     setSearched(true);
     try {
-      const response = await blogService.searchBlogs(searchQuery, 0, 20);
+      const response = await blogService.searchByTitle(searchQuery, 0, 20);
       setBlogs(response.content || []);
     } catch (error) {
       toast.error('Failed to search blogs');

@@ -77,6 +77,9 @@ public class User implements UserDetails {
 
     private LocalDateTime lastLoginAt;
 
+    private LocalDateTime passwordChangedAt;
+
+
     /** JPA requires this */
     public User() {
     }

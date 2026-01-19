@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, UUID> {
-    Page<Comment> findByBlog_IdOrderByCreatedAtDesc(UUID blogId, Pageable pageable);
+    Page<Comment> findByBlog_IdAndParentIsNullOrderByCreatedAtDesc(UUID blogId, Pageable pageable);
 
     long countByBlog_Id(UUID blogId);
 }

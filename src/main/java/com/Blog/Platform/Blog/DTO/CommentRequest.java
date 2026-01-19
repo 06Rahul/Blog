@@ -7,4 +7,6 @@ import lombok.Data;
 public class CommentRequest {
     @NotBlank(message = "Content cannot be empty")
     private String content;
+
+    private java.util.UUID parentId;
 }
