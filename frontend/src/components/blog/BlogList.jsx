@@ -4,36 +4,51 @@ import { blogService } from '../../services/blogService';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
-export const BlogList = ({ type = 'published', categoryId = null, tag = null, username = null }) => {
+export const BlogList = ({
+  type = 'published',
+  categoryId = null,
+  tag = null,
+  username = null,
+  page: controlledPage,
+  size = 10,
+  onDataLoaded
+}) => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
+  const [internalPage, setInternalPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  const currentPage = controlledPage !== undefined ? controlledPage : internalPage;
 
   useEffect(() => {
     loadBlogs();
-  }, [page, type, categoryId, tag, username]);
+  }, [currentPage, type, categoryId, tag, username]);
 
   const loadBlogs = async () => {
     setLoading(true);
     try {
       let response;
       if (type === 'drafts') {
-        response = await blogService.getMyDrafts(page, 10);
+        response = await blogService.getMyDrafts(currentPage, size);
       } else if (type === 'my-published') {
-        response = await blogService.getMyPublishedBlogs(page, 10);
+        response = await blogService.getMyPublishedBlogs(currentPage, size);
       } else if (type === 'category') {
-        response = await blogService.searchByCategory(categoryId, page, 10);
+        response = await blogService.searchByCategory(categoryId, currentPage, size);
       } else if (type === 'tag') {
-        response = await blogService.searchByTag(tag, page, 10);
+        response = await blogService.searchByTag(tag, currentPage, size);
       } else if (type === 'author') {
-        response = await blogService.searchByAuthor(username, page, 10);
+        response = await blogService.searchByAuthor(username, currentPage, size);
       } else {
-        response = await blogService.getPublishedBlogs(page, 10);
+        response = await blogService.getPublishedBlogs(currentPage, size);
       }
 
       setBlogs(response.content || []);
-      setTotalPages(response.totalPages || 0);
+      const total = response.totalPages || 0;
+      setTotalPages(total);
+
+      if (onDataLoaded) {
+        onDataLoaded({ totalPages: total, totalElements: response.totalElements });
+      }
     } catch (error) {
       toast.error('Failed to load blogs');
       console.error(error);
@@ -170,21 +185,21 @@ export const BlogList = ({ type = 'published', categoryId = null, tag = null, us
             </div>
           ))}
 
-          {totalPages > 1 && (
+          {totalPages > 1 && controlledPage === undefined && (
             <div className="flex justify-center gap-2 mt-6">
               <button
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={page === 0}
+                onClick={() => setInternalPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
                 className="px-4 py-2 bg-slate-800 border border-slate-700 text-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
               >
                 Previous
               </button>
               <span className="px-4 py-2 text-gray-400">
-                Page {page + 1} of {totalPages}
+                Page {currentPage + 1} of {totalPages}
               </span>
               <button
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                onClick={() => setInternalPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
                 className="px-4 py-2 bg-slate-800 border border-slate-700 text-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
               >
                 Next

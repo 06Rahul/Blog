@@ -14,6 +14,10 @@ public class CommentMapper {
                 comment.getAuthor().getId(),
                 comment.getAuthor().getActualUsername(),
                 comment.getAuthor().getProfileImageUrl(),
-                comment.getCreatedAt());
+                comment.getCreatedAt(),
+                comment.getParent() != null ? comment.getParent().getId() : null,
+                comment.getReplies().stream()
+                        .map(this::toResponse)
+                        .collect(java.util.stream.Collectors.toList()));
     }
 }

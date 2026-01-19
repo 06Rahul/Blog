@@ -6,6 +6,7 @@ import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './components/auth/Login';
 import { Signup } from './components/auth/Signup';
+import { OTPVerification } from './components/auth/OTPVerification';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './components/profile/Profile';
@@ -36,6 +37,7 @@ function App() {
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/verify-otp" element={<OTPVerification />} />
                 <Route path="/" element={<Home />} />
                 <Route path="/search" element={<BlogSearch />} />
 

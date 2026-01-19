@@ -6,10 +6,18 @@ import { blogService } from '../services/blogService';
 export const Home = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 10;
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // Reset page when category changes
+  useEffect(() => {
+    setPage(0);
+  }, [selectedCategory]);
 
   const loadCategories = async () => {
     try {
@@ -17,6 +25,13 @@ export const Home = () => {
       setCategories(cats);
     } catch (error) {
       console.error('Failed to load categories', error);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -61,8 +76,8 @@ export const Home = () => {
             <button
               onClick={() => setSelectedCategory(null)}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${!selectedCategory
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
                 }`}
             >
               All
@@ -72,8 +87,8 @@ export const Home = () => {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${selectedCategory === cat.id
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-gray-300'
                   }`}
               >
                 {cat.name}
@@ -85,7 +100,33 @@ export const Home = () => {
         <BlogList
           type={selectedCategory ? 'category' : 'published'}
           categoryId={selectedCategory}
+          page={page}
+          size={pageSize}
+          onDataLoaded={(data) => setTotalPages(data.totalPages)}
         />
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 0}
+              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-gray-400">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages - 1}
+              className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

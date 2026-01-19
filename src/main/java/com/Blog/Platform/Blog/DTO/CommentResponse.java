@@ -15,4 +15,7 @@ public class CommentResponse {
     private String authorUsername;
     private String authorProfileImageUrl;
     private LocalDateTime createdAt;
+
+    private UUID parentId;
+    private java.util.List<CommentResponse> replies;
 }

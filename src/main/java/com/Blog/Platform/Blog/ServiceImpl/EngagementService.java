@@ -54,6 +54,12 @@ public class EngagementService {
         comment.setAuthor(author);
         comment.setBlog(blog);
 
+        if (request.getParentId() != null) {
+            Comment parent = commentRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new EntityNotFoundException("Parent comment not found"));
+            comment.setParent(parent);
+        }
+
         Comment saved = commentRepository.save(comment);
         return commentMapper.toResponse(saved);
     }
@@ -62,7 +68,7 @@ public class EngagementService {
     public Page<CommentResponse> getComments(UUID blogId, Pageable pageable) {
 
         return commentRepository
-                .findByBlog_IdOrderByCreatedAtDesc(blogId, pageable)
+                .findByBlog_IdAndParentIsNullOrderByCreatedAtDesc(blogId, pageable)
                 .map(commentMapper::toResponse);
     }
 
