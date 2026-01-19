@@ -128,137 +128,124 @@ export const BlogEditor = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-transparent">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              {id ? 'Edit Blog' : 'Create New Blog'}
+            <h1 className="text-5xl font-serif text-gray-900 mb-2">
+              {id ? 'Edit Story' : 'New Story'}
             </h1>
-            <p className="text-gray-400">Share your story with the world</p>
+            <p className="text-gray-400 font-serif italic text-lg">Share your voice with the world.</p>
           </div>
           <Link
             to="/ai"
-            className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+            className="flex items-center gap-2 px-6 py-3 border border-[#d4cfe0] bg-[#e4dfef] text-gray-900 text-xs font-bold uppercase tracking-widest hover:bg-[#d4cfe0] hover:text-black transition-all shadow-sm"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Show AI Assistant
+            AI Assistant
           </Link>
         </div>
 
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-white">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
             {/* Title */}
-            <div>
-              <label htmlFor="title" className="block text-white font-semibold mb-2">
-                Title <span className="text-red-500">*</span>
-              </label>
+            <div className="space-y-4">
               <input
                 {...register('title', { required: 'Title is required' })}
                 type="text"
-                placeholder="Enter blog title..."
-                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Title"
+                className="w-full text-5xl md:text-6xl font-serif text-gray-900 placeholder-gray-300 border-none focus:ring-0 p-0 bg-transparent leading-tight"
               />
               {errors.title && (
-                <p className="mt-1 text-sm text-red-400">{errors.title.message}</p>
+                <p className="text-sm text-red-500 font-medium pl-1">{errors.title.message}</p>
               )}
             </div>
 
-            {/* Category */}
-            <div>
-              <label htmlFor="categoryId" className="block text-white font-semibold mb-2">
-                Category
-              </label>
-              <select
-                {...register('categoryId')}
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setValue('categoryId', e.target.value);
-                }}
-                className="w-full px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              >
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tags */}
-            <div>
-              <label htmlFor="tags" className="block text-white font-semibold mb-2">
-                Tags
-              </label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={newTagInput}
-                  onChange={(e) => setNewTagInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
+            {/* Category & Tags Row */}
+            <div className="flex flex-col md:flex-row gap-8 py-8 border-t border-b border-gray-100">
+              <div className="flex-1">
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Category</label>
+                <select
+                  {...register('categoryId')}
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setValue('categoryId', e.target.value);
                   }}
-                  placeholder="Add a tag..."
-                  className="flex-1 px-4 py-3 bg-slate-900 border-2 border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors"
+                  className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm py-3 px-4 rounded-none focus:outline-none focus:border-black"
                 >
-                  Add
-                </button>
+                  <option value="">Select a category</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <p className="text-sm text-gray-400 mb-3">Press Enter or click Add to add a tag</p>
-              {selectedTags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+
+              <div className="flex-[2]">
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Tags</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                    placeholder="Add tag..."
+                    className="bg-gray-50 border border-gray-200 text-gray-700 text-sm py-3 px-4 rounded-none focus:outline-none focus:border-black w-40"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTag}
+                    className="px-6 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
                   {selectedTags.map((tag) => (
                     <div
                       key={tag}
-                      className="flex items-center gap-2 px-3 py-1 bg-blue-900/30 text-blue-400 rounded-full"
+                      className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wide"
                     >
-                      {tag}
+                      #{tag}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-blue-300"
+                        className="hover:text-red-500 ml-1"
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        &times;
                       </button>
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
 
+
             {/* Content */}
-            <div>
-              <label htmlFor="content" className="block text-white font-semibold mb-2">
-                Content <span className="text-red-500">*</span>
-              </label>
-              <div className="bg-white rounded-xl overflow-hidden">
+            <div className="prose-editor">
+              <div className="bg-white border rounded-none p-4 min-h-[600px]">
                 <ReactQuill
                   ref={quillRef}
                   theme="snow"
                   value={watch('content')}
                   onChange={(value) => setValue('content', value)}
-                  className="h-96 mb-12"
-                  placeholder="Write your blog content here..."
+                  className="font-serif text-lg text-gray-800 h-[550px]"
+                  placeholder="Tell your story..."
                   modules={{
                     toolbar: [
-                      [{ 'header': [1, 2, 3, false] }],
-                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ 'header': [1, 2, false] }],
+                      ['bold', 'italic', 'blockquote'],
                       [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                      ['link', 'blockquote', 'code-block'],
+                      ['link', 'code-block'],
                       ['clean']
                     ]
                   }}
@@ -266,25 +253,25 @@ export const BlogEditor = () => {
                 <AnimatedQuillCaret quill={quillInstance} />
               </div>
               {errors.content && (
-                <p className="mt-1 text-sm text-red-400">{errors.content.message}</p>
+                <p className="mt-2 text-sm text-red-500 font-medium">{errors.content.message}</p>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 justify-end pt-4">
+            <div className="flex gap-4 justify-end pt-12 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="px-6 py-3 border-2 border-slate-600 text-gray-300 hover:bg-slate-700 font-semibold rounded-xl transition-colors"
+                className="px-8 py-4 border border-gray-200 text-gray-500 text-xs font-bold uppercase tracking-widest hover:border-black hover:text-black transition-colors"
               >
-                Cancel
+                Discard
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-4 bg-gray-900 text-white text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors shadow-lg disabled:opacity-50"
               >
-                {loading ? 'Saving...' : id ? 'Update Blog' : 'Create Blog'}
+                {loading ? 'Saving...' : id ? 'Update Draft' : 'Save Draft'}
               </button>
               {id && (
                 <button
@@ -298,9 +285,9 @@ export const BlogEditor = () => {
                       toast.error('Failed to publish blog');
                     }
                   }}
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                  className="px-8 py-4 bg-green-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-green-700 transition-colors shadow-lg"
                 >
-                  Publish
+                  Publish Now
                 </button>
               )}
             </div>

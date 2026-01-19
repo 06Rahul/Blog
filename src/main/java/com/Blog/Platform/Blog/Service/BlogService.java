@@ -13,18 +13,23 @@ import java.util.UUID;
 public interface BlogService {
 
     Page<BlogPostResponse> searchByTitle(String title, Pageable pageable);
+
     Page<BlogPostResponse> searchByTag(String tag, Pageable pageable);
+
     Page<BlogPostResponse> searchByAuthor(String username, Pageable pageable);
+
     Page<BlogPostResponse> searchByCategory(UUID categoryId, Pageable pageable);
 
+    Page<BlogPostResponse> searchBlogs(String query, Pageable pageable);
 
     // Create
-
 
     BlogPostResponse createBlog(BlogPostRequest request);
 
     Page<BlogPostResponse> getMyDrafts(Pageable pageable);
+
     Page<BlogPostResponse> getMyPublishedBlogs(Pageable pageable);
+
     BlogPostResponse getMyBlogById(UUID blogId);
 
     Page<BlogPostResponse> getPublishedBlogs(Pageable pageable);
@@ -42,6 +47,6 @@ public interface BlogService {
 
     BlogPost getMyBlogEntity(UUID blogId);
 
-
-
+    // For Feed
+    Page<BlogPostResponse> getFeedBlogs(Pageable pageable);
 }

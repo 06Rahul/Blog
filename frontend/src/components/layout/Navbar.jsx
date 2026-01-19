@@ -1,118 +1,120 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { NotificationDropdown } from '../notification/NotificationDropdown';
 
 export const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+    setIsMenuOpen(false);
   };
 
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Search', path: '/search' },
+    ...(isAuthenticated ? [
+      { name: 'Dashboard', path: '/dashboard' },
+      { name: 'Write', path: '/blogs/new' },
+      { name: 'Profile', path: '/profile' }
+    ] : [])
+  ];
+
   return (
-    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-700">
-      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-          Blog Platform
-        </Link>
+    <header className="bg-white border-b border-gray-100 py-4 md:py-8 sticky top-0 z-50 bg-blue-50">
+      <div className="max-w-7xl mx-auto px-6 relative">
 
-        <nav className="hidden md:flex gap-6">
-          <Link
-            to="/"
-            className="text-sm text-gray-300 hover:text-blue-400 transition-colors"
-          >
-            Home
-          </Link>
-          {isAuthenticated && (
-            <>
-              <Link
-                to="/dashboard"
-                className="text-sm text-gray-300 hover:text-blue-400 transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/blogs/new"
-                className="text-sm text-gray-300 hover:text-blue-400 transition-colors"
-              >
-                New Blog
-              </Link>
-              <Link
-                to="/ai"
-                className="text-sm text-gray-300 hover:text-blue-400 transition-colors"
-              >
-                AI Assistant
-              </Link>
-            </>
-          )}
-          <Link
-            to="/search"
-            className="text-sm text-gray-300 hover:text-blue-400 transition-colors"
-          >
-            Search
-          </Link>
-        </nav>
+        {/* Desktop Header */}
+        <div className="flex flex-col items-center justify-center gap-6 md:gap-8">
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            className="p-2 text-gray-300 hover:text-white transition-colors"
-          >
-            {theme === 'light' ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
+
+          {/* Mobile Top Bar: Logo + Menu Toggle */}
+          <div className="w-full flex justify-between items-center md:hidden">
+            <Link to="/" className="text-2xl font-serif tracking-wide text-black">
+              Blog Platform
+            </Link>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
+              <div className="space-y-1.5">
+                <span className={`block w-6 h-0.5 bg-black transition-transform ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                <span className={`block w-6 h-0.5 bg-black transition-opacity ${isMenuOpen ? 'opacity-0' : ''}`}></span>
+                <span className={`block w-6 h-0.5 bg-black transition-transform ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+              </div>
+            </button>
+          </div>
+
+          {/* Desktop Auth/Theme (Absolute Top Right) */}
+          <div className="hidden md:flex absolute top-0 right-6 items-center gap-4 text-xs tracking-widest uppercase text-gray-400">
+            <button onClick={toggleTheme} className="hover:text-black transition-colors">
+              {theme === 'light' ? 'Dark' : 'Light'}
+            </button>
+            {isAuthenticated ? (
+              <>
+                <span>{user?.firstName || 'User'}</span>
+                <button onClick={handleLogout} className="hover:text-black transition-colors">Logout</button>
+                <NotificationDropdown />
+              </>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+              <Link to="/login" className="hover:text-black transition-colors">Login</Link>
             )}
-          </button>
+          </div>
 
-          {isAuthenticated ? (
-            <>
-              <Link to="/profile" className="flex items-center gap-2">
-                {user?.profileImageUrl ? (
-                  <img
-                    src={user.profileImageUrl}
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm">
-                    {user?.firstName?.[0] || user?.username?.[0] || 'U'}
-                  </div>
-                )}
-                <span className="text-sm text-gray-300 hidden lg:block">{user?.email}</span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm border border-gray-600 text-gray-300 hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+          {/* Desktop Logo */}
+          <Link to="/" className="hidden md:block text-5xl font-serif tracking-wide text-black hover:text-gray-700 transition-colors">
+            Blog Platform
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-12 text-sm tracking-[0.2em] font-medium text-gray-500 uppercase">
+            {navLinks.map(link => (
+              <Link key={link.name} to={link.path} className="hover:text-black transition-colors">{link.name}</Link>
+            ))}
+          </nav>
         </div>
-      </div>
-    </header>
+
+        {/* Mobile Menu Dropdown */}
+        {isMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 py-6 px-6 flex flex-col gap-6 shadow-lg">
+            <nav className="flex flex-col gap-4 text-sm tracking-[0.2em] font-medium text-gray-500 uppercase">
+              {navLinks.map(link => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="hover:text-black transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+            <div className="border-t border-gray-100 pt-6 flex flex-col gap-4 text-xs tracking-widest uppercase text-gray-400">
+              <div className="flex justify-between items-center">
+                <span>Theme</span>
+                <button onClick={toggleTheme} className="text-black">
+                  {theme === 'light' ? 'Dark' : 'Light'}
+                </button>
+              </div>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span>Account</span>
+                    <span>{user?.firstName}</span>
+                  </div>
+                  <button onClick={handleLogout} className="text-left hover:text-black text-red-400">Logout</button>
+                </>
+              ) : (
+                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="hover:text-black transition-colors">Login</Link>
+              )}
+            </div>
+          </div>
+        )}
+
+      </div >
+    </header >
   );
 };

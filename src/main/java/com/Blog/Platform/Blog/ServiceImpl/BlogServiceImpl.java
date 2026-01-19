@@ -38,6 +38,22 @@ public class BlogServiceImpl implements BlogService {
     private final AsyncAiWorker asyncAiWorker;
     private final com.Blog.Platform.Blog.Repo.TagRepository tagRepository;
     private final com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository;
+    private final com.Blog.Platform.User.Service.FollowService followService;
+    private final com.Blog.Platform.User.Service.NotificationService notificationService;
+
+    @Override
+    public Page<BlogPostResponse> getFeedBlogs(Pageable pageable) {
+        User currentUser = getCurrentUser();
+        java.util.List<User> following = followService.getFollowingUsers(currentUser.getId());
+
+        if (following.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return blogPostRepository
+                .findByAuthorIn(following, pageable)
+                .map(blogPostMapper::toResponse);
+    }
 
     @Override
     public Page<BlogPostResponse> searchByTitle(String title, Pageable pageable) {
@@ -65,6 +81,13 @@ public class BlogServiceImpl implements BlogService {
     public Page<BlogPostResponse> searchByCategory(UUID categoryId, Pageable pageable) {
         return blogPostRepository
                 .findByCategoryId(categoryId, pageable)
+                .map(blogPostMapper::toResponse);
+    }
+
+    @Override
+    public Page<BlogPostResponse> searchBlogs(String query, Pageable pageable) {
+        return blogPostRepository
+                .searchEverywhere(query, pageable)
                 .map(blogPostMapper::toResponse);
     }
 
@@ -226,6 +249,17 @@ public class BlogServiceImpl implements BlogService {
         BlogPost saved = blogPostRepository.saveAndFlush(blog);
 
         asyncAiWorker.generateSummary(saved.getId(), saved.getContent());
+
+        // Notify followers
+        java.util.List<User> followers = followService.getFollowersList(saved.getAuthor().getId());
+        for (User follower : followers) {
+            notificationService.createNotification(
+                    follower,
+                    saved.getAuthor(),
+                    com.Blog.Platform.User.Model.NotificationType.NEW_POST,
+                    saved.getId().toString(),
+                    saved.getAuthor().getFirstName() + " posted a new blog: " + saved.getTitle());
+        }
 
         return blogPostMapper.toResponse(saved);
     }

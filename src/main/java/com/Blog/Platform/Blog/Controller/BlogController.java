@@ -21,111 +21,109 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BlogController {
 
-    private final BlogService blogService;
-    private final AsyncAiWorker asyncAiWorker;
+        private final BlogService blogService;
+        private final AsyncAiWorker asyncAiWorker;
 
-    @PostMapping("/{id}/generate-summary")
-    @PreAuthorize("hasAnyRole('AUTHOR','ADMIN')")
-    public ResponseEntity<Void> regenerateSummary(@PathVariable UUID id) {
+        @PostMapping("/{id}/generate-summary")
+        @PreAuthorize("hasAnyRole('AUTHOR','ADMIN')")
+        public ResponseEntity<Void> regenerateSummary(@PathVariable UUID id) {
 
-        BlogPost blog = blogService.getMyBlogEntity(id); // ownership check
+                BlogPost blog = blogService.getMyBlogEntity(id); // ownership check
 
-        asyncAiWorker.generateSummary(
-                blog.getId(),
-                blog.getContent()
-        );
+                asyncAiWorker.generateSummary(
+                                blog.getId(),
+                                blog.getContent());
 
-        return ResponseEntity.accepted().build();
-    }
+                return ResponseEntity.accepted().build();
+        }
 
-    /* ===================== CREATE ===================== */
+        /* ===================== CREATE ===================== */
 
+        @PostMapping
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<BlogPostResponse> createBlog(
+                        @Valid @RequestBody BlogPostRequest request) {
+                return ResponseEntity
+                                .status(HttpStatus.CREATED)
+                                .body(blogService.createBlog(request));
+        }
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<BlogPostResponse> createBlog(
-            @Valid @RequestBody BlogPostRequest request
-    ) {
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(blogService.createBlog(request));
-    }
+        /* ===================== READ (MY BLOGS) ===================== */
 
-    /* ===================== READ (MY BLOGS) ===================== */
+        @GetMapping("/me/drafts")
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<Page<BlogPostResponse>> getMyDrafts(
+                        Pageable pageable) {
+                return ResponseEntity.ok(blogService.getMyDrafts(pageable));
+        }
 
-    @GetMapping("/me/drafts")
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<Page<BlogPostResponse>> getMyDrafts(
-            Pageable pageable
-    ) {
-        return ResponseEntity.ok(blogService.getMyDrafts(pageable));
-    }
+        @GetMapping("/me/published")
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<Page<BlogPostResponse>> getMyPublishedBlogs(
+                        Pageable pageable) {
+                return ResponseEntity.ok(blogService.getMyPublishedBlogs(pageable));
+        }
 
-    @GetMapping("/me/published")
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<Page<BlogPostResponse>> getMyPublishedBlogs(
-            Pageable pageable
-    ) {
-        return ResponseEntity.ok(blogService.getMyPublishedBlogs(pageable));
-    }
+        @GetMapping("/me/{blogId}")
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<BlogPostResponse> getMyBlogById(
+                        @PathVariable UUID blogId) {
+                return ResponseEntity.ok(blogService.getMyBlogById(blogId));
+        }
 
-    @GetMapping("/me/{blogId}")
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<BlogPostResponse> getMyBlogById(
-            @PathVariable UUID blogId
-    ) {
-        return ResponseEntity.ok(blogService.getMyBlogById(blogId));
-    }
+        /* ===================== READ (PUBLIC) ===================== */
 
-    /* ===================== READ (PUBLIC) ===================== */
+        @GetMapping("/published")
+        public ResponseEntity<Page<BlogPostResponse>> getPublishedBlogs(
+                        Pageable pageable) {
+                return ResponseEntity.ok(blogService.getPublishedBlogs(pageable));
+        }
 
-    @GetMapping("/published")
-    public ResponseEntity<Page<BlogPostResponse>> getPublishedBlogs(
-            Pageable pageable
-    ) {
-        return ResponseEntity.ok(blogService.getPublishedBlogs(pageable));
-    }
+        @GetMapping("/feed")
+        public ResponseEntity<Page<BlogPostResponse>> getFeedBlogs(
+                        Pageable pageable) {
+                return ResponseEntity.ok(blogService.getFeedBlogs(pageable));
+        }
 
-    @GetMapping("/published/{blogId}")
-    public ResponseEntity<BlogPostResponse> getPublishedBlogById(
-            @PathVariable UUID blogId
-    ) {
-        return ResponseEntity.ok(blogService.getPublishedBlogById(blogId));
-    }
+        @GetMapping("/published/{id}")
+        public ResponseEntity<BlogPostResponse> getPublishedBlogById(@PathVariable UUID id) {
+                return ResponseEntity.ok(blogService.getPublishedBlogById(id));
+        }
 
-    /* ===================== UPDATE ===================== */
+        @GetMapping("/search/unified")
+        public ResponseEntity<Page<BlogPostResponse>> searchUnified(
+                        @RequestParam String q, Pageable pageable) {
+                return ResponseEntity.ok(blogService.searchBlogs(q, pageable));
+        }
 
-    @PutMapping("/{blogId}")
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<BlogPostResponse> updateDraft(
-            @PathVariable UUID blogId,
-            @Valid @RequestBody BlogPostRequest request
-    ) {
-        return ResponseEntity.ok(
-                blogService.updateDraft(blogId, request)
-        );
-    }
+        /* ===================== UPDATE ===================== */
 
-    /* ===================== PUBLISH ===================== */
+        @PutMapping("/{blogId}")
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<BlogPostResponse> updateDraft(
+                        @PathVariable UUID blogId,
+                        @Valid @RequestBody BlogPostRequest request) {
+                return ResponseEntity.ok(
+                                blogService.updateDraft(blogId, request));
+        }
 
-    @PutMapping("/{blogId}/publish")
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<BlogPostResponse> publishBlog(
-            @PathVariable UUID blogId
-    ) {
-        return ResponseEntity.ok(
-                blogService.publishBlog(blogId)
-        );
-    }
+        /* ===================== PUBLISH ===================== */
 
-    /* ===================== DELETE ===================== */
+        @PutMapping("/{blogId}/publish")
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<BlogPostResponse> publishBlog(
+                        @PathVariable UUID blogId) {
+                return ResponseEntity.ok(
+                                blogService.publishBlog(blogId));
+        }
 
-    @DeleteMapping("/{blogId}")
-    @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
-    public ResponseEntity<Void> deleteMyBlog(
-            @PathVariable UUID blogId
-    ) {
-        blogService.deleteMyBlog(blogId);
-        return ResponseEntity.noContent().build();
-    }
+        /* ===================== DELETE ===================== */
+
+        @DeleteMapping("/{blogId}")
+        @PreAuthorize("hasAnyRole('USER','AUTHOR','ADMIN')")
+        public ResponseEntity<Void> deleteMyBlog(
+                        @PathVariable UUID blogId) {
+                blogService.deleteMyBlog(blogId);
+                return ResponseEntity.noContent().build();
+        }
 }
