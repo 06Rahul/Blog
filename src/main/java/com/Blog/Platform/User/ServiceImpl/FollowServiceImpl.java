@@ -6,7 +6,7 @@ import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.FollowRepository;
 import com.Blog.Platform.User.Service.FollowService;
 import com.Blog.Platform.User.Service.UserService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,13 +15,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class FollowServiceImpl implements FollowService {
 
     private final FollowRepository followRepository;
     private final UserService userService;
     private final com.Blog.Platform.User.Service.NotificationService notificationService;
+
+    public FollowServiceImpl(FollowRepository followRepository, UserService userService,
+            com.Blog.Platform.User.Service.NotificationService notificationService) {
+        this.followRepository = followRepository;
+        this.userService = userService;
+        this.notificationService = notificationService;
+    }
 
     @Override
     public void followUser(UUID targetUserId) {

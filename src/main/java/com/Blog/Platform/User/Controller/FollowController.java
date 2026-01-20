@@ -3,7 +3,7 @@ package com.Blog.Platform.User.Controller;
 import com.Blog.Platform.User.DTO.ApiMessageResponse;
 import com.Blog.Platform.User.DTO.PublicUserProfileResponse;
 import com.Blog.Platform.User.Service.FollowService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +14,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
 public class FollowController {
 
     private final FollowService followService;
+
+    public FollowController(FollowService followService) {
+        this.followService = followService;
+    }
 
     @PostMapping("/{id}/follow")
     @PreAuthorize("isAuthenticated()")

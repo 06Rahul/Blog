@@ -10,7 +10,7 @@ import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.User.Model.Role;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,11 +18,15 @@ import java.time.LocalDate;
 import static com.Blog.Platform.AiService.Model.AiFeature.*;
 
 @Service
-@RequiredArgsConstructor
 public class AiUsageService {
 
     private final AiUsageRepository repo;
     private final UserRepo userRepo;
+
+    public AiUsageService(AiUsageRepository repo, UserRepo userRepo) {
+        this.repo = repo;
+        this.userRepo = userRepo;
+    }
 
     public void validateAndIncrement(AiFeature feature) {
 

@@ -53,7 +53,10 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, UUID> {
                         "LOWER(b.content) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
                         "LOWER(b.author.username) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
                         "LOWER(t.name) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+                        "AND (:categoryId IS NULL OR b.category.id = :categoryId) " +
                         "AND b.status = com.Blog.Platform.Blog.Model.BlogStatus.PUBLISHED")
-        Page<BlogPost> searchEverywhere(@org.springframework.data.repository.query.Param("query") String query,
+        Page<BlogPost> searchEverywhere(
+                        @org.springframework.data.repository.query.Param("query") String query,
+                        @org.springframework.data.repository.query.Param("categoryId") UUID categoryId,
                         Pageable pageable);
 }

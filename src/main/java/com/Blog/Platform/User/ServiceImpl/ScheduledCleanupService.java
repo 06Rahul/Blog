@@ -2,8 +2,7 @@ package com.Blog.Platform.User.ServiceImpl;
 
 import com.Blog.Platform.User.Model.PendingUser;
 import com.Blog.Platform.User.Repo.PendingUserRepo;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,13 +10,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ScheduledCleanupService {
+
+    private static final Logger log = LoggerFactory.getLogger(ScheduledCleanupService.class);
 
     private final PendingUserRepo pendingUserRepo;
     private final FileStorageServiceImpl fileStorageService;
+
+    public ScheduledCleanupService(PendingUserRepo pendingUserRepo, FileStorageServiceImpl fileStorageService) {
+        this.pendingUserRepo = pendingUserRepo;
+        this.fileStorageService = fileStorageService;
+    }
 
     /**
      * Cleanup expired pending users and their temporary profile images

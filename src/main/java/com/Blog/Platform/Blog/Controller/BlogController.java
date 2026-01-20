@@ -6,7 +6,7 @@ import com.Blog.Platform.Blog.DTO.BlogPostResponse;
 import com.Blog.Platform.Blog.Model.BlogPost;
 import com.Blog.Platform.Blog.Service.BlogService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -18,11 +18,15 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/blogs")
-@RequiredArgsConstructor
 public class BlogController {
 
         private final BlogService blogService;
         private final AsyncAiWorker asyncAiWorker;
+
+        public BlogController(BlogService blogService, AsyncAiWorker asyncAiWorker) {
+                this.blogService = blogService;
+                this.asyncAiWorker = asyncAiWorker;
+        }
 
         @PostMapping("/{id}/generate-summary")
         @PreAuthorize("hasAnyRole('AUTHOR','ADMIN')")
@@ -88,12 +92,6 @@ public class BlogController {
         @GetMapping("/published/{id}")
         public ResponseEntity<BlogPostResponse> getPublishedBlogById(@PathVariable UUID id) {
                 return ResponseEntity.ok(blogService.getPublishedBlogById(id));
-        }
-
-        @GetMapping("/search/unified")
-        public ResponseEntity<Page<BlogPostResponse>> searchUnified(
-                        @RequestParam String q, Pageable pageable) {
-                return ResponseEntity.ok(blogService.searchBlogs(q, pageable));
         }
 
         /* ===================== UPDATE ===================== */

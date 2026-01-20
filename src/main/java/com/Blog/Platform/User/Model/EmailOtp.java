@@ -1,14 +1,12 @@
 package com.Blog.Platform.User.Model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "email_otp")
-@Data
+
 public class EmailOtp {
 
     @Id
@@ -22,5 +20,44 @@ public class EmailOtp {
     private LocalDateTime expiresAt;
 
     private boolean verified = false;
-}
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getOtpHash() {
+        return otpHash;
+    }
+
+    public void setOtpHash(String otpHash) {
+        this.otpHash = otpHash;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+}

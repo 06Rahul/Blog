@@ -144,10 +144,11 @@ export const blogService = {
   },
 
   // Unified Search
-  searchUnified: async (query, page = 0, size = 10) => {
-    const response = await api.get('/blogs/search/unified', {
-      params: { q: query, page, size },
-    });
+  searchUnified: async (query, categoryId = null, page = 0, size = 10) => {
+    const params = { q: query, page, size };
+    if (categoryId) params.categoryId = categoryId;
+
+    const response = await api.get('/blogs/search/unified', { params });
     return response.data;
   },
 };

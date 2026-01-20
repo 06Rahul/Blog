@@ -3,18 +3,20 @@ package com.Blog.Platform.User.ServiceImpl;
 import com.Blog.Platform.User.Model.RefreshToken;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.RefreshTokenRepo;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
-
 @Service
-@RequiredArgsConstructor
 public class RefreshTokenService {
 
     private final RefreshTokenRepo refreshTokenRepo;
+
+    public RefreshTokenService(RefreshTokenRepo refreshTokenRepo) {
+        this.refreshTokenRepo = refreshTokenRepo;
+    }
 
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
@@ -27,8 +29,7 @@ public class RefreshTokenService {
         refreshToken.setUser(user);
         refreshToken.setToken(token);
         refreshToken.setExpiryDate(
-                LocalDateTime.now().plusSeconds(refreshExpiration / 1000)
-        );
+                LocalDateTime.now().plusSeconds(refreshExpiration / 1000));
 
         return refreshTokenRepo.save(refreshToken);
     }
@@ -50,7 +51,6 @@ public class RefreshTokenService {
 
         return refreshToken;
     }
-
 
     public void delete(RefreshToken refreshToken) {
         refreshTokenRepo.delete(refreshToken);

@@ -1,19 +1,16 @@
 package com.Blog.Platform.User.Model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "follows", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "follower_id", "following_id" })
 })
-@NoArgsConstructor
 public class Follow {
 
     @Id
@@ -32,8 +29,43 @@ public class Follow {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    public Follow() {
+    }
+
     public Follow(User follower, User following) {
         this.follower = follower;
         this.following = following;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public User getFollower() {
+        return follower;
+    }
+
+    public void setFollower(User follower) {
+        this.follower = follower;
+    }
+
+    public User getFollowing() {
+        return following;
+    }
+
+    public void setFollowing(User following) {
+        this.following = following;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

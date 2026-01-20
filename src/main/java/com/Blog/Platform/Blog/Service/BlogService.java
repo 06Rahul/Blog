@@ -20,7 +20,7 @@ public interface BlogService {
 
     Page<BlogPostResponse> searchByCategory(UUID categoryId, Pageable pageable);
 
-    Page<BlogPostResponse> searchBlogs(String query, Pageable pageable);
+    Page<BlogPostResponse> searchBlogs(String query, UUID categoryId, Pageable pageable);
 
     // Create
 

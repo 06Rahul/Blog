@@ -7,7 +7,7 @@ import com.Blog.Platform.Blog.Repo.BlogPostRepository;
 import com.Blog.Platform.User.Model.SavedBlog;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.SavedBlogRepository;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,13 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class SavedBlogService {
 
     private final SavedBlogRepository savedBlogRepository;
     private final BlogPostRepository blogPostRepository;
     private final UserService userService;
     private final BlogPostMapper blogPostMapper;
+
+    public SavedBlogService(SavedBlogRepository savedBlogRepository, BlogPostRepository blogPostRepository,
+            UserService userService, BlogPostMapper blogPostMapper) {
+        this.savedBlogRepository = savedBlogRepository;
+        this.blogPostRepository = blogPostRepository;
+        this.userService = userService;
+        this.blogPostMapper = blogPostMapper;
+    }
 
     @Transactional
     public void saveBlog(UUID blogId) {

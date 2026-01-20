@@ -1,72 +1,3 @@
-//package com.Blog.Platform.User.Config;
-//
-//import com.Blog.Platform.User.Utils.JwtUtil;
-//import jakarta.servlet.FilterChain;
-//import jakarta.servlet.ServletException;
-//import jakarta.servlet.http.HttpServletRequest;
-//import jakarta.servlet.http.HttpServletResponse;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-//import org.springframework.security.core.context.SecurityContextHolder;
-//import org.springframework.security.core.userdetails.UserDetails;
-//import org.springframework.stereotype.Component;
-//import org.springframework.web.filter.OncePerRequestFilter;
-//
-//import java.io.IOException;
-//
-//@Component
-//@RequiredArgsConstructor
-//public class JwtAuthenticationFilter extends OncePerRequestFilter {
-//
-//    private final JwtUtil jwtUtil;
-//    private final CustomUserDetailsService customUserDetailsService;
-//
-//    @Override
-//    protected boolean shouldNotFilter(HttpServletRequest request) {
-//        String path = request.getServletPath();
-//        return path.equals("/api/user/login")
-//                || path.equals("/api/user/signup")
-//                || path.equals("/api/user/refresh");
-//    }
-//
-//    @Override
-//    protected void doFilterInternal(HttpServletRequest request,
-//            HttpServletResponse response,
-//            FilterChain filterChain)
-//            throws ServletException, IOException {
-//
-//        String authHeader = request.getHeader("Authorization");
-//
-//        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-//            String token = authHeader.substring(7).trim();
-//
-//            try {
-//                if (!jwtUtil.isAccessToken(token)) {
-//                    filterChain.doFilter(request, response);
-//                    return;
-//                }
-//
-//                String username = jwtUtil.extractUsername(token);
-//
-//                if (SecurityContextHolder.getContext().getAuthentication() == null) {
-//                    UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-//
-//                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-//                            userDetails,
-//                            null,
-//                            userDetails.getAuthorities());
-//
-//                    SecurityContextHolder.getContext().setAuthentication(authToken);
-//                }
-//
-//            } catch (Exception ex) {
-//                SecurityContextHolder.clearContext();
-//            }
-//        }
-//
-//        filterChain.doFilter(request, response);
-//    }
-//}
 
 package com.Blog.Platform.User.Config;
 
@@ -76,7 +7,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -89,11 +20,15 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
+
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService customUserDetailsService) {
+        this.jwtUtil = jwtUtil;
+        this.customUserDetailsService = customUserDetailsService;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -127,8 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                    UserDetails userDetails =
-                            customUserDetailsService.loadUserByUsername(username);
+                    UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
                     // 🔐 CRITICAL PART — invalidate token after password reset
                     if (userDetails instanceof User user) {
@@ -136,18 +70,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         if (pwdChangedAt != null &&
                                 issuedAt.toInstant().isBefore(
-                                        pwdChangedAt.atZone(ZoneId.systemDefault()).toInstant()
-                                )) {
+                                        pwdChangedAt.atZone(ZoneId.systemDefault()).toInstant())) {
                             throw new RuntimeException("JWT expired due to password reset");
                         }
                     }
 
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
@@ -162,4 +93,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-

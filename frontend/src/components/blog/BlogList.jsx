@@ -102,14 +102,26 @@ export const BlogList = ({
   }
 
   return (
-    <div className="space-y-20">
+    <div className="space-y-4">
       {blogs.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-gray-400 font-serif italic text-xl mb-6">No stories found.</p>
           {(type === 'drafts' || type === 'my-published') && (
             <Link
               to="/blogs/new"
-              className="inline-block border border-black px-8 py-3 text-xs font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all"
+              // className="inline-block border border-gray-900 dark:border-gray-100 px-8 py-3 text-gray-900 dark:text-gray-100 text-xs font-bold tracking-widest uppercase hover:bg-gray-900 dark:hover:bg-gray-100 hover:text-white dark:hover:text-gray-900 transition-all"
+              className="
+inline-block
+border border-cyan-300 dark:border-cyan-600
+bg-cyan-50 dark:bg-cyan-950
+px-8 py-3
+text-cyan-700 dark:text-cyan-200
+text-xs font-bold tracking-widest uppercase
+hover:bg-cyan-500 dark:hover:bg-cyan-600
+hover:text-white
+transition-all duration-300
+"
+
             >
               Start Writing
             </Link>
@@ -120,7 +132,22 @@ export const BlogList = ({
           {blogs.map((blog) => (
             isDashboardView ? (
               // Compact List View for Dashboard
-              <div key={blog.id} className="group flex items-center justify-between py-6 border-b border-gray-100 hover:bg-gray-50 -mx-4 px-4 transition-colors">
+              <div
+                key={blog.id}
+                className="
+    group
+    flex items-center justify-between
+    py-6
+    bg-gray-50
+    border-b border-gray-200
+    rounded-lg
+    hover:bg-gray-100
+    -mx-4 px-4
+    transition-colors
+  "
+              >
+
+
                 <div className="flex-1 min-w-0 pr-8">
                   <div className="flex items-center gap-3 text-xs text-gray-400 mb-1">
                     {blog.publishedAt && (
@@ -208,8 +235,20 @@ export const BlogList = ({
                 <div className="flex items-center gap-4">
                   <Link
                     to={`/blogs/${blog.id}`}
-                    className="inline-block border border-gray-300 px-8 py-3 text-xs font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all duration-300"
-                  >
+                    className="
+inline-block
+border border-cyan-300 dark:border-cyan-600
+bg-cyan-50 dark:bg-cyan-950
+px-8 py-3
+text-cyan-700 dark:text-cyan-200
+text-xs font-bold tracking-widest uppercase
+hover:bg-cyan-500 dark:hover:bg-cyan-600
+hover:text-white
+transition-all duration-300
+rounded-full
+rounded-lg
+hover:scale-[1.02]
+" >
                     Continue Reading
                   </Link>
 

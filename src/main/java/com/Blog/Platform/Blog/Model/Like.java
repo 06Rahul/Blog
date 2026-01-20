@@ -2,7 +2,7 @@ package com.Blog.Platform.Blog.Model;
 
 import com.Blog.Platform.User.Model.User;
 import jakarta.persistence.*;
-import lombok.Data;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -12,7 +12,6 @@ import java.util.UUID;
 @Table(name = "blog_likes", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "user_id", "blog_id" })
 })
-@Data
 public class Like {
 
     @Id
@@ -29,4 +28,36 @@ public class Like {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public BlogPost getBlog() {
+        return blog;
+    }
+
+    public void setBlog(BlogPost blog) {
+        this.blog = blog;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

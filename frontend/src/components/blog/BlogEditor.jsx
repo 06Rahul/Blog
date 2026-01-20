@@ -1,298 +1,213 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { blogService } from '../../services/blogService';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { TiptapEditor } from './TiptapEditor';
 import { AIAssistant } from '../ai/AIAssistant';
 import toast from 'react-hot-toast';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import AnimatedQuillCaret from './AnimatedQuillCaret';
 
 export const BlogEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [newTagInput, setNewTagInput] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
+  const [coverImage, setCoverImage] = useState(null);
   const [showAI, setShowAI] = useState(false);
-  const quillRef = useRef(null);
-  const [quillInstance, setQuillInstance] = useState(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  useEffect(() => {
-    if (quillRef.current) {
-      setQuillInstance(quillRef.current.getEditor());
-    }
-  }, []);
+  const categories = ['Technology', 'Lifestyle', 'Travel', 'Health', 'Business', 'Art', 'Science'];
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    control,
-  } = useForm({
-    defaultValues: {
-      title: '',
-      content: '',
-      categoryId: '',
-    },
-  });
-
-  const content = watch('content');
-
-  useEffect(() => {
-    loadMetaData();
-    if (id) {
-      loadBlog();
-    }
-  }, [id]);
-
-  const loadMetaData = async () => {
-    try {
-      const cats = await blogService.getCategories();
-      setCategories(cats);
-    } catch (error) {
-      console.error('Failed to load metadata:', error);
+  const handleTagKeyDown = (e) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      if (!tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+      }
+      setTagInput('');
     }
   };
 
-  const loadBlog = async () => {
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // In a real app, upload to server/S3 here
+      const imageUrl = URL.createObjectURL(file);
+      setCoverImage(imageUrl);
+    }
+  };
+
+  const handlePublish = async (status = 'published') => {
+    if (!title.trim() || !content.trim()) {
+      toast.error('Title and content are required');
+      return;
+    }
+
+    setIsPublishing(true);
     try {
-      const blog = await blogService.getMyBlogById(id);
-      setValue('title', blog.title);
-      setValue('content', blog.content);
-      if (blog.categoryName) {
-        const category = categories.find(c => c.name === blog.categoryName);
-        if (category) {
-          setSelectedCategory(category.id);
-          setValue('categoryId', category.id);
-        }
-      }
-      if (blog.tags && blog.tags.length > 0) {
-        setSelectedTags(blog.tags);
-      }
-    } catch (error) {
-      toast.error('Failed to load blog');
+      // API call would go here
+      // await blogService.createBlog({ title, content, category, tags, coverImage, status });
+
+      // Simulation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success(status === 'published' ? 'Story published!' : 'Draft saved!');
       navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to save story');
+    } finally {
+      setIsPublishing(false);
     }
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = newTagInput.trim();
-    if (trimmedTag && !selectedTags.includes(trimmedTag)) {
-      setSelectedTags([...selectedTags, trimmedTag]);
-      setNewTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setSelectedTags(selectedTags.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleAIApply = (result) => {
-    setValue('content', result);
+  const applyAIContent = (aiResult) => {
+    navigator.clipboard.writeText(aiResult);
+    toast.success('AI content copied to clipboard! Paste it where you want.');
     setShowAI(false);
   };
 
-  const handleAISetTitle = (title) => {
-    setValue('title', title);
-  };
-
-  const onSubmit = async (data) => {
-    setLoading(true);
-    try {
-      const blogData = {
-        title: data.title,
-        content: data.content,
-        categoryId: data.categoryId || null,
-        tags: selectedTags,
-      };
-
-      if (id) {
-        await blogService.updateBlog(id, blogData);
-        toast.success('Blog updated successfully!');
-        navigate('/dashboard');
-      } else {
-        await blogService.createBlog(blogData);
-        toast.success('Blog created successfully!');
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save blog');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-transparent">
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-5xl font-serif text-gray-900 mb-2">
-              {id ? 'Edit Story' : 'New Story'}
-            </h1>
-            <p className="text-gray-400 font-serif italic text-lg">Share your voice with the world.</p>
-          </div>
-          <Link
-            to="/ai"
-            className="flex items-center gap-2 px-6 py-3 border border-[#d4cfe0] bg-[#e4dfef] text-gray-900 text-xs font-bold uppercase tracking-widest hover:bg-[#d4cfe0] hover:text-black transition-all shadow-sm"
+    <div className="min-h-screen bg-white relative">
+      {/* Top Navigation Bar */}
+      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-40 border-b border-gray-100 px-6 py-4 flex justify-between items-center transition-all duration-300">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-gray-400 hover:text-gray-900 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            AI Assistant
-          </Link>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          </button>
+          <span className="text-sm font-serif text-gray-500 italic">
+            {id ? 'Editing Story' : 'Drafting new story'}
+          </span>
         </div>
 
-        <div className="bg-white">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
-            {/* Title */}
-            <div className="space-y-4">
-              <input
-                {...register('title', { required: 'Title is required' })}
-                type="text"
-                placeholder="Title"
-                className="w-full text-5xl md:text-6xl font-serif text-gray-900 placeholder-gray-300 border-none focus:ring-0 p-0 bg-transparent leading-tight"
-              />
-              {errors.title && (
-                <p className="text-sm text-red-500 font-medium pl-1">{errors.title.message}</p>
-              )}
-            </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowAI(!showAI)}
+            className={`p-2 rounded-full transition-all duration-300 ${showAI ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+            title="AI Assistant"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          </button>
 
-            {/* Category & Tags Row */}
-            <div className="flex flex-col md:flex-row gap-8 py-8 border-t border-b border-gray-100">
-              <div className="flex-1">
-                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Category</label>
-                <select
-                  {...register('categoryId')}
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setValue('categoryId', e.target.value);
-                  }}
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm py-3 px-4 rounded-none focus:outline-none focus:border-black"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <button
+            onClick={() => handlePublish('draft')}
+            disabled={isPublishing}
+            className="px-4 py-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            Save Draft
+          </button>
 
-              <div className="flex-[2]">
-                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Tags</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newTagInput}
-                    onChange={(e) => setNewTagInput(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                    placeholder="Add tag..."
-                    className="bg-gray-50 border border-gray-200 text-gray-700 text-sm py-3 px-4 rounded-none focus:outline-none focus:border-black w-40"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="px-6 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {selectedTags.map((tag) => (
-                    <div
-                      key={tag}
-                      className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wide"
-                    >
-                      #{tag}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-red-500 ml-1"
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <button
+            onClick={() => handlePublish('published')}
+            disabled={isPublishing}
+            className="px-6 py-2 bg-green-600 text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-green-700 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
+          >
+            {isPublishing ? 'Publishing...' : 'Publish'}
+          </button>
+        </div>
+      </nav>
 
-
-            {/* Content */}
-            <div className="prose-editor">
-              <div className="bg-white border rounded-none p-4 min-h-[600px]">
-                <ReactQuill
-                  ref={quillRef}
-                  theme="snow"
-                  value={watch('content')}
-                  onChange={(value) => setValue('content', value)}
-                  className="font-serif text-lg text-gray-800 h-[550px]"
-                  placeholder="Tell your story..."
-                  modules={{
-                    toolbar: [
-                      [{ 'header': [1, 2, false] }],
-                      ['bold', 'italic', 'blockquote'],
-                      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                      ['link', 'code-block'],
-                      ['clean']
-                    ]
-                  }}
-                />
-                <AnimatedQuillCaret quill={quillInstance} />
-              </div>
-              {errors.content && (
-                <p className="mt-2 text-sm text-red-500 font-medium">{errors.content.message}</p>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-4 justify-end pt-12 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="px-8 py-4 border border-gray-200 text-gray-500 text-xs font-bold uppercase tracking-widest hover:border-black hover:text-black transition-colors"
-              >
-                Discard
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-4 bg-gray-900 text-white text-xs font-bold uppercase tracking-widest hover:bg-black transition-colors shadow-lg disabled:opacity-50"
-              >
-                {loading ? 'Saving...' : id ? 'Update Draft' : 'Save Draft'}
-              </button>
-              {id && (
+      <div className="pt-24 pb-12 px-6 max-w-5xl mx-auto flex gap-8">
+        {/* Main Editor Area */}
+        <div className="flex-1 transition-all duration-300">
+          {/* Cover Image */}
+          <div className="mb-8 group relative h-64 bg-gray-50 rounded-lg overflow-hidden border-2 border-dashed border-gray-200 hover:border-gray-300 transition-all flex items-center justify-center">
+            {coverImage ? (
+              <>
+                <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
                 <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await blogService.publishBlog(id);
-                      toast.success('Blog published successfully!');
-                      navigate('/');
-                    } catch (error) {
-                      toast.error('Failed to publish blog');
-                    }
-                  }}
-                  className="px-8 py-4 bg-green-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-green-700 transition-colors shadow-lg"
+                  onClick={() => setCoverImage(null)}
+                  className="absolute top-4 right-4 p-2 bg-white/90 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700"
                 >
-                  Publish Now
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
-              )}
+              </>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center gap-2 text-gray-400 group-hover:text-gray-500 transition-colors">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <span className="text-sm font-medium">Add a cover image</span>
+                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+              </label>
+            )}
+          </div>
+
+          {/* Inputs */}
+          <div className="mb-8 space-y-6">
+            <input
+              type="text"
+              placeholder="Title"
+              className="w-full text-5xl font-serif font-bold text-gray-900 placeholder-gray-300 border-none outline-none bg-transparent"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+
+            <div className="flex flex-wrap gap-4 items-center">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="px-4 py-2 bg-gray-50 border-none rounded-lg text-sm font-medium text-gray-600 focus:ring-2 focus:ring-indigo-100 outline-none cursor-pointer"
+              >
+                <option value="">Select Category</option>
+                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+
+              <div className="flex-1 flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                <input
+                  type="text"
+                  placeholder="Add generic tags..."
+                  className="bg-transparent border-none outline-none text-sm text-gray-600 placeholder-gray-400 flex-1 min-w-[100px]"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                />
+              </div>
             </div>
-          </form>
+
+            {/* Tags List */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span key={index} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium flex items-center gap-1 group">
+                    #{tag}
+                    <button
+                      onClick={() => removeTag(tag)}
+                      className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <TiptapEditor
+            content={content}
+            onChange={setContent}
+            blogId={id}
+          />
         </div>
+
+        {/* AI Sidebar */}
+        {showAI && (
+          <div className="w-80 shrink-0 animate-fade-in-right">
+            <div className="sticky top-24">
+              <AIAssistant
+                onApply={applyAIContent}
+                onSetTitle={setTitle}
+                initialContent={content}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

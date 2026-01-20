@@ -16,8 +16,7 @@ import com.Blog.Platform.User.Excepction.UserNotFoundException;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,10 +25,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
-@Slf4j
 public class BlogServiceImpl implements BlogService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BlogServiceImpl.class);
 
     private final BlogPostMapper blogPostMapper;
     private final BlogPostRepository blogPostRepository;
@@ -40,6 +39,22 @@ public class BlogServiceImpl implements BlogService {
     private final com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository;
     private final com.Blog.Platform.User.Service.FollowService followService;
     private final com.Blog.Platform.User.Service.NotificationService notificationService;
+
+    public BlogServiceImpl(BlogPostMapper blogPostMapper, BlogPostRepository blogPostRepository, UserRepo userRepo,
+            AiService aiService, AsyncAiWorker asyncAiWorker, com.Blog.Platform.Blog.Repo.TagRepository tagRepository,
+            com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository,
+            com.Blog.Platform.User.Service.FollowService followService,
+            com.Blog.Platform.User.Service.NotificationService notificationService) {
+        this.blogPostMapper = blogPostMapper;
+        this.blogPostRepository = blogPostRepository;
+        this.userRepo = userRepo;
+        this.aiService = aiService;
+        this.asyncAiWorker = asyncAiWorker;
+        this.tagRepository = tagRepository;
+        this.categoryRepository = categoryRepository;
+        this.followService = followService;
+        this.notificationService = notificationService;
+    }
 
     @Override
     public Page<BlogPostResponse> getFeedBlogs(Pageable pageable) {
@@ -85,9 +100,9 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    public Page<BlogPostResponse> searchBlogs(String query, Pageable pageable) {
+    public Page<BlogPostResponse> searchBlogs(String query, UUID categoryId, Pageable pageable) {
         return blogPostRepository
-                .searchEverywhere(query, pageable)
+                .searchEverywhere(query, categoryId, pageable)
                 .map(blogPostMapper::toResponse);
     }
 
@@ -107,7 +122,14 @@ public class BlogServiceImpl implements BlogService {
         blogPost.setAuthor(author);
         blogPost.setTitle(request.getTitle());
         blogPost.setContent(request.getContent());
-        blogPost.setStatus(BlogStatus.DRAFT);
+        if (request.getStatus() != null) {
+            blogPost.setStatus(request.getStatus());
+            if (request.getStatus() == BlogStatus.PUBLISHED) {
+                blogPost.setPublishedAt(LocalDateTime.now());
+            }
+        } else {
+            blogPost.setStatus(BlogStatus.DRAFT);
+        }
 
         // Handle tags
         if (request.getTags() != null && !request.getTags().isEmpty()) {
