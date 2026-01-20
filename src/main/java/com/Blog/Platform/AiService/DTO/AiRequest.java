@@ -1,11 +1,40 @@
 package com.Blog.Platform.AiService.DTO;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data @AllArgsConstructor
 public class AiRequest {
     private String content;
     private String tone;
-    private  String maxLength;
+    private String maxLength;
+
+    public AiRequest() {
+    }
+
+    public AiRequest(String content, String tone, String maxLength) {
+        this.content = content;
+        this.tone = tone;
+        this.maxLength = maxLength;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getTone() {
+        return tone;
+    }
+
+    public void setTone(String tone) {
+        this.tone = tone;
+    }
+
+    public String getMaxLength() {
+        return maxLength;
+    }
+
+    public void setMaxLength(String maxLength) {
+        this.maxLength = maxLength;
+    }
 }

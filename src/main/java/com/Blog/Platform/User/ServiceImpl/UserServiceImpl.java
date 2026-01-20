@@ -10,7 +10,7 @@ import com.Blog.Platform.User.Excepction.UserNotFoundException;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
 import com.Blog.Platform.User.Service.UserService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,13 +19,19 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final FileStorageServiceImpl fileStorageService;
     private final AiUsageService aiUsageService;
+
+    public UserServiceImpl(UserRepo userRepo, FileStorageServiceImpl fileStorageService,
+            AiUsageService aiUsageService) {
+        this.userRepo = userRepo;
+        this.fileStorageService = fileStorageService;
+        this.aiUsageService = aiUsageService;
+    }
 
     @Override
     public Optional<User> findByUsername(String username) {

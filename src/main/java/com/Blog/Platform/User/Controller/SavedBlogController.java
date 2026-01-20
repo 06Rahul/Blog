@@ -2,7 +2,7 @@ package com.Blog.Platform.User.Controller;
 
 import com.Blog.Platform.Blog.DTO.BlogPostResponse;
 import com.Blog.Platform.User.Service.SavedBlogService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -13,11 +13,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/saved-blogs")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class SavedBlogController {
 
     private final SavedBlogService savedBlogService;
+
+    public SavedBlogController(SavedBlogService savedBlogService) {
+        this.savedBlogService = savedBlogService;
+    }
 
     @PostMapping("/{blogId}")
     public ResponseEntity<?> saveBlog(@PathVariable UUID blogId) {

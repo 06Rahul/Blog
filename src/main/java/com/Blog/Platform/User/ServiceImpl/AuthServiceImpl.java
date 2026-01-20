@@ -15,8 +15,8 @@ import com.Blog.Platform.User.UserMapper.UserMapper;
 import com.Blog.Platform.User.Utils.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,9 +24,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final EmailOtpRepo emailOtpRepo;
     private final PendingUserRepo pendingUserRepo;
@@ -41,6 +41,25 @@ public class AuthServiceImpl implements AuthService {
     private final CustomUserDetailsService customUserDetailsService;
     private final FileStorageServiceImpl fileStorageService;
     private final EmailServiceImpl emailService;
+
+    public AuthServiceImpl(EmailOtpRepo emailOtpRepo, PendingUserRepo pendingUserRepo, CookieUtil cookieUtil,
+            RefreshTokenRepo refreshTokenRepo, JwtUtil jwtUtil, UserRepo userRepo, UserMapper userMapper,
+            PasswordEncoder passwordEncoder, RefreshTokenService refreshTokenService,
+            CustomUserDetailsService customUserDetailsService, FileStorageServiceImpl fileStorageService,
+            EmailServiceImpl emailService) {
+        this.emailOtpRepo = emailOtpRepo;
+        this.pendingUserRepo = pendingUserRepo;
+        this.cookieUtil = cookieUtil;
+        this.refreshTokenRepo = refreshTokenRepo;
+        this.jwtUtil = jwtUtil;
+        this.userRepo = userRepo;
+        this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
+        this.customUserDetailsService = customUserDetailsService;
+        this.fileStorageService = fileStorageService;
+        this.emailService = emailService;
+    }
 
     // @Override
     // public SignUpResponse register(SignUpRequest request, MultipartFile image) {

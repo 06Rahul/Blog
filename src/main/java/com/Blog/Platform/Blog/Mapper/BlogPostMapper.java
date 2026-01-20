@@ -27,7 +27,9 @@ public class BlogPostMapper {
                 blog.getTags() != null
                         ? blog.getTags().stream().map(tag -> tag.getName()).toList()
                         : java.util.Collections.emptyList(),
-                // Get category name
+                // Category ID
+                blog.getCategory() != null ? blog.getCategory().getId() : null,
+                // Category Name
                 blog.getCategory() != null ? blog.getCategory().getName() : null);
 
     }

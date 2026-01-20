@@ -52,10 +52,25 @@ const CommentForm = ({ blogId, parentId = null, onSuccess, onCancel, placeholder
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder={placeholder}
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[100px] resize-y"
+                className="
+w-full
+p-4
+border border-gray-300
+rounded-lg
+bg-gray-50 dark:bg-gray-800
+text-gray-900 dark:text-gray-100
+placeholder-gray-400
+focus:ring-2 focus:ring-primary-500
+focus:border-transparent
+min-h-[100px]
+resize-y
+"
+
+
                 required
                 autoFocus={!!parentId}
             />
+
             <div className="mt-2 flex justify-end gap-2">
                 {onCancel && (
                     <button

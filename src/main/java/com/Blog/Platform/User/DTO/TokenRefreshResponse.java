@@ -1,9 +1,17 @@
 package com.Blog.Platform.User.DTO;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data @AllArgsConstructor
 public class TokenRefreshResponse {
     private String accessToken;
+
+    public TokenRefreshResponse(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
 }

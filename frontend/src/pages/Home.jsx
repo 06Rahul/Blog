@@ -60,7 +60,7 @@ export const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50">
+    <div className="min-h-screen">
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
 
@@ -110,7 +110,7 @@ export const Home = () => {
               <h2 className="text-xl font-serif text-gray-900">
                 Search Results for <span className="italic">"{searchQuery}"</span>
               </h2>
-              <button onClick={() => setSearchParams({})} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-red-500 mt-2">
+              <button onClick={() => setSearchParams({})} className="text-xs font-bold uppercase tracking-widest text-blue-400 hover:text-blue-500 mt-2">
                 Clear Search
               </button>
             </div>
@@ -131,7 +131,7 @@ export const Home = () => {
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 0}
-                className="hover:text-black text-gray-400 disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                className="hover:text-black text-blue-400 disabled:opacity-30 disabled:hover:text-blue-400 transition-colors"
               >
                 &larr; Newer Posts
               </button>
@@ -141,7 +141,7 @@ export const Home = () => {
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages - 1}
-                className="hover:text-black text-gray-400 disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                className="hover:text-black text-blue-400 disabled:opacity-30 disabled:hover:text-blue-400 transition-colors"
               >
                 Older Posts &rarr;
               </button>
@@ -150,7 +150,7 @@ export const Home = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden md:block md:col-span-4 pl-8 border-l border-gray-100">
+        <div className="hidden md:block md:col-span-4 pl-8 border-l border-blue-100">
           <Sidebar categories={categories} />
         </div>
 

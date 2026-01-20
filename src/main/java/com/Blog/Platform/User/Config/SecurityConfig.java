@@ -1,6 +1,5 @@
 package com.Blog.Platform.User.Config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,11 +16,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 @Configuration
-@RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -52,10 +54,12 @@ public class SecurityConfig {
                                 "/api/blogs/search/**",
                                 "/api/blogs/published/**",
                                 "/api/blogs/published",
+                                "/api/meta/**",
                                 "/api/users/*/followers",
                                 "/api/users/*/following",
                                 "/api/users/*/followers/count",
-                                "/api/users/*/following/count")
+                                "/api/users/*/following/count",
+                                "/ws/chat/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter,

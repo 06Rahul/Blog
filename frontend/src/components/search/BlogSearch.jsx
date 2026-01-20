@@ -139,7 +139,7 @@
 //     </div>
 //   );
 // };
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { blogService } from '../../services/blogService';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -147,18 +147,39 @@ import toast from 'react-hot-toast';
 
 export const BlogSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await blogService.getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error('Failed to load categories', error);
+    }
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() && !selectedCategory) return;
 
     setLoading(true);
     setSearched(true);
     try {
-      const response = await blogService.searchByTitle(searchQuery, 0, 20);
+      // Use unified search
+      const response = await blogService.searchUnified(
+        searchQuery,
+        selectedCategory || null,
+        0,
+        20
+      );
       setBlogs(response.content || []);
     } catch (error) {
       toast.error('Failed to search blogs');
@@ -169,59 +190,84 @@ export const BlogSearch = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-stone-100 to-slate-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 py-10">
 
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent mb-4">
+        <div className="mb-10 text-center md:text-left">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
             Search Blogs
           </h1>
-          <p className="text-stone-600 max-w-xl">
+          <p className="text-gray-600 dark:text-gray-400 max-w-xl">
             Discover articles, authors, and ideas across the platform
           </p>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="relative max-w-2xl mt-6">
-            <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+          {/* Search Form */}
+          <form onSubmit={handleSearch} className="relative max-w-3xl mt-6 flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
 
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title, author, or tags..."
-              className="w-full pl-12 pr-4 py-4
-                bg-stone-50 border border-stone-300 rounded-2xl
-                text-stone-800 placeholder-stone-400 text-lg
-                shadow-sm focus:shadow-md
-                focus:outline-none focus:ring-2 focus:ring-indigo-400
-                transition-all"
-            />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title, author, or tags..."
+                className="w-full pl-12 pr-4 py-3
+                    bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl
+                    text-gray-900 dark:text-gray-100 placeholder-gray-400 text-base
+                    shadow-sm focus:shadow-md
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    transition-all"
+              />
+            </div>
+
+            {/* Category Filter */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl
+                    text-gray-700 dark:text-gray-300 text-base
+                    shadow-sm focus:shadow-md
+                    focus:outline-none focus:ring-2 focus:ring-blue-500
+                    transition-all appearance-none cursor-pointer md:w-48"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+
+            <button
+              type="submit"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-colors"
+            >
+              Search
+            </button>
           </form>
         </div>
 
         {/* Loader */}
         {loading && (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
         )}
 
         {/* Results */}
         {!loading && searched && (
           <>
-            <div className="mb-5 text-stone-600 font-medium">
+            <div className="mb-5 text-gray-600 dark:text-gray-400 font-medium">
               {blogs.length} {blogs.length === 1 ? 'result' : 'results'} found
             </div>
 
@@ -229,24 +275,31 @@ export const BlogSearch = () => {
               {blogs.map((blog) => (
                 <div
                   key={blog.id}
-                  className="bg-stone-100/90 backdrop-blur
-                    border border-stone-200 rounded-3xl p-7
+                  className="bg-white dark:bg-gray-800
+                    border border-gray-200 dark:border-gray-700 rounded-2xl p-6
                     shadow-sm hover:shadow-lg hover:-translate-y-0.5
                     transition-all duration-300"
                 >
                   <Link to={`/blogs/${blog.id}`}>
-                    <h3 className="text-2xl font-bold text-stone-800 mb-4 hover:text-indigo-600 transition-colors">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       {blog.title}
                     </h3>
                   </Link>
 
-                  <div className="flex flex-wrap items-center gap-5 text-sm text-stone-600 mb-4">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
                     <span className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-200 to-blue-200 text-indigo-700 flex items-center justify-center text-xs font-semibold shadow-sm">
+                      {/* Avatar or Placeholder */}
+                      <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 flex items-center justify-center text-xs font-bold">
                         {blog.authorUsername?.[0]?.toUpperCase() || 'U'}
                       </div>
                       {blog.authorUsername}
                     </span>
+
+                    {blog.category && (
+                      <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-xs font-medium">
+                        {blog.category.name}
+                      </span>
+                    )}
 
                     {blog.publishedAt && (
                       <span className="flex items-center gap-1">
@@ -274,10 +327,10 @@ export const BlogSearch = () => {
                         <span
                           key={tag}
                           className="px-3 py-1 rounded-full text-sm
-                            bg-indigo-100 text-indigo-700
-                            border border-indigo-200"
+                            bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300
+                            border border-blue-100 dark:border-blue-800"
                         >
-                          #{tag}
+                          #{tag.name || tag}
                         </span>
                       ))}
                     </div>
@@ -286,9 +339,9 @@ export const BlogSearch = () => {
               ))}
 
               {blogs.length === 0 && (
-                <div className="bg-stone-100 border border-stone-200 rounded-3xl p-14 text-center shadow-sm">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-14 text-center shadow-sm">
                   <svg
-                    className="w-16 h-16 text-stone-400 mx-auto mb-4"
+                    className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -300,7 +353,7 @@ export const BlogSearch = () => {
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 0 0114 0z"
                     />
                   </svg>
-                  <p className="text-stone-600 text-lg">
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">
                     No blogs found matching your search
                   </p>
                 </div>
@@ -310,9 +363,9 @@ export const BlogSearch = () => {
         )}
 
         {!searched && !loading && (
-          <div className="bg-stone-100 border border-stone-200 rounded-3xl p-14 text-center shadow-sm">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-14 text-center shadow-sm">
             <svg
-              className="w-16 h-16 text-stone-400 mx-auto mb-4"
+              className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -324,8 +377,8 @@ export const BlogSearch = () => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 0 0114 0z"
               />
             </svg>
-            <p className="text-stone-600 text-lg">
-              Enter a search term to find blogs
+            <p className="text-gray-500 dark:text-gray-400 text-lg">
+              Enter a search term or select a category to find blogs
             </p>
           </div>
         )}

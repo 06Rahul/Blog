@@ -4,7 +4,7 @@ import com.Blog.Platform.User.Model.Notification;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Service.NotificationService;
 import com.Blog.Platform.User.Service.UserService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,12 +13,16 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/notifications")
-@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class NotificationController {
 
     private final NotificationService notificationService;
     private final UserService userService;
+
+    public NotificationController(NotificationService notificationService, UserService userService) {
+        this.notificationService = notificationService;
+        this.userService = userService;
+    }
 
     @GetMapping
     public ResponseEntity<List<Notification>> getUserNotifications() {

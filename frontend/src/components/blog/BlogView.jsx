@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { LikeButton } from './LikeButton';
 import { CommentSection } from './CommentSection';
 import { SaveButton } from './SaveButton';
@@ -9,6 +10,7 @@ import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import parse from 'html-react-parser';
 import { useAuth } from '../../context/AuthContext';
+import { ExecutableCodeBlock } from '../compiler/ExecutableCodeBlock';
 
 export const BlogView = () => {
   const { id } = useParams();
@@ -93,11 +95,40 @@ export const BlogView = () => {
           </div>
         )}
 
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{blog.title}</h1>
+        <header className="mb-8 relative">
+          {/* Hero Image Transition */}
+          {/* If we had a hero image here, we would use motion.img with the same layoutId */}
+          {blog.coverImage && (
+            <motion.div
+              className="w-full h-64 md:h-80 mb-8 rounded-xl overflow-hidden"
+              layoutId={`blog-image-${id}`}
+            >
+              <motion.img
+                src={blog.coverImage}
+                alt={blog.title}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          )}
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl font-bold text-gray-900 mb-4"
+          >
+            {blog.title}
+          </motion.h1>
 
           {blog.summary && (
-            <p className="text-xl text-gray-600 mb-6 italic">{blog.summary}</p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-xl text-gray-600 mb-6 italic"
+            >
+              {blog.summary}
+            </motion.p>
           )}
 
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
@@ -139,7 +170,32 @@ export const BlogView = () => {
 
         <div className="prose max-w-none">
           <div className="text-gray-800 leading-relaxed ql-editor">
-            {parse(blog.content)}
+            {parse(blog.content, {
+              replace: (domNode) => {
+                if (domNode.name === 'pre' && domNode.children && domNode.children.length > 0) {
+                  const codeNode = domNode.children[0];
+                  if (codeNode.name === 'code') {
+                    // Extract language class
+                    const className = codeNode.attribs?.class || '';
+                    const match = className.match(/language-(\w+)/);
+                    const language = match ? match[1] : null;
+
+                    // Extract code content
+                    let code = '';
+                    if (codeNode.children && codeNode.children.length > 0) {
+                      // Check for simple text node
+                      if (codeNode.children[0].type === 'text') {
+                        code = codeNode.children[0].data;
+                      }
+                    }
+
+                    if (language) {
+                      return <ExecutableCodeBlock language={language} code={code} />;
+                    }
+                  }
+                }
+              }
+            })}
           </div>
         </div>
 

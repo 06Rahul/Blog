@@ -3,12 +3,10 @@ package com.Blog.Platform.Blog.DTO;
 import com.Blog.Platform.Blog.Model.BlogStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
 import java.util.List;
 import java.util.UUID;
 
-@Data
 public class BlogPostRequest {
 
     @NotBlank
@@ -26,4 +24,44 @@ public class BlogPostRequest {
 
     // Category ID
     private UUID categoryId;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public BlogStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BlogStatus status) {
+        this.status = status;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
+    }
 }

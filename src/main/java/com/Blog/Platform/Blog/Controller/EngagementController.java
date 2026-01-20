@@ -3,7 +3,7 @@ package com.Blog.Platform.Blog.Controller;
 import com.Blog.Platform.Blog.DTO.CommentRequest;
 import com.Blog.Platform.Blog.DTO.CommentResponse;
 import com.Blog.Platform.Blog.ServiceImpl.EngagementService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,10 +16,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/blogs")
-@RequiredArgsConstructor
 public class EngagementController {
 
     private final EngagementService engagementService;
+
+    public EngagementController(EngagementService engagementService) {
+        this.engagementService = engagementService;
+    }
 
     // Comments
     @PostMapping("/{blogId}/comments")

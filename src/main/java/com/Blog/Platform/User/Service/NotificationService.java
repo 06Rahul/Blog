@@ -4,7 +4,7 @@ import com.Blog.Platform.User.Model.Notification;
 import com.Blog.Platform.User.Model.NotificationType;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.NotificationRepository;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +12,16 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    public NotificationService(NotificationRepository notificationRepository,
+            org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate) {
+        this.notificationRepository = notificationRepository;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @Transactional
     public void createNotification(User recipient, User sender, NotificationType type, String referenceId,
@@ -29,7 +35,13 @@ public class NotificationService {
         notification.setType(type);
         notification.setReferenceId(referenceId);
         notification.setMessage(message);
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+
+        // Send real-time notification
+        messagingTemplate.convertAndSendToUser(
+                recipient.getEmail(),
+                "/queue/notifications",
+                saved);
     }
 
     public List<Notification> getUserNotifications(User user) {

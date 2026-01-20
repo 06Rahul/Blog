@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BlogList } from '../components/blog/BlogList';
-
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('drafts');
 
   return (
     <div className="min-h-screen transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 py-12">
+
         <div className="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-gray-100 pb-8">
           <div className="text-center md:text-left mb-6 md:mb-0">
             <h1 className="text-3xl font-serif text-gray-900 mb-2">My Dashboard</h1>
@@ -15,7 +15,18 @@ export const Dashboard = () => {
           </div>
           <Link
             to="/blogs/new"
-            className="px-6 py-3 border border-black text-xs font-bold tracking-widest uppercase hover:bg-black hover:text-white transition-all"
+            className="
+inline-block
+border border-cyan-300 dark:border-cyan-600
+bg-cyan-50 dark:bg-cyan-950
+px-8 py-3
+text-cyan-700 dark:text-cyan-200
+text-xs font-bold tracking-widest uppercase
+hover:bg-cyan-500 dark:hover:bg-cyan-600
+hover:text-white
+transition-all duration-300
+"
+
           >
             Create New Story
           </Link>

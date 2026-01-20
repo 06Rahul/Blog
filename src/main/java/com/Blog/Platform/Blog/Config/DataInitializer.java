@@ -2,8 +2,6 @@ package com.Blog.Platform.Blog.Config;
 
 import com.Blog.Platform.Blog.Model.Category;
 import com.Blog.Platform.Blog.Repo.CategoryRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -11,11 +9,15 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class DataInitializer implements CommandLineRunner {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DataInitializer.class);
+
     private final CategoryRepository categoryRepository;
+
+    public DataInitializer(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     @Override
     public void run(String... args) throws Exception {

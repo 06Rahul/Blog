@@ -1,8 +1,6 @@
 package com.Blog.Platform.User.ServiceImpl;
 
 import com.Blog.Platform.User.Config.StorageProperties;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,12 +10,19 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
-@RequiredArgsConstructor
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
-@Slf4j
 public class FileStorageServiceImpl {
 
+    private static final Logger log = LoggerFactory.getLogger(FileStorageServiceImpl.class);
+
     private final StorageProperties storageProperties;
+
+    public FileStorageServiceImpl(StorageProperties storageProperties) {
+        this.storageProperties = storageProperties;
+    }
 
     public String saveImage(MultipartFile file) {
         try {

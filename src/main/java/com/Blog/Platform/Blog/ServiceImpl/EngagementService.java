@@ -13,7 +13,7 @@ import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class EngagementService {
 
@@ -31,6 +30,15 @@ public class EngagementService {
     private final BlogPostRepository blogPostRepository;
     private final UserRepo userRepo;
     private final CommentMapper commentMapper;
+
+    public EngagementService(CommentRepository commentRepository, LikeRepository likeRepository,
+            BlogPostRepository blogPostRepository, UserRepo userRepo, CommentMapper commentMapper) {
+        this.commentRepository = commentRepository;
+        this.likeRepository = likeRepository;
+        this.blogPostRepository = blogPostRepository;
+        this.userRepo = userRepo;
+        this.commentMapper = commentMapper;
+    }
 
     /* ===================== UTIL ===================== */
 

@@ -8,7 +8,7 @@ import com.Blog.Platform.User.DTO.UserProfileResponse;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Service.UserService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,11 +20,15 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
 public class UserQueryController {
 
         private final UserService userService;
         private final AiUsageService aiUsageService;
+
+        public UserQueryController(UserService userService, AiUsageService aiUsageService) {
+                this.userService = userService;
+                this.aiUsageService = aiUsageService;
+        }
 
         @GetMapping("/me")
         public ResponseEntity<UserProfileResponse> me(Authentication auth) {

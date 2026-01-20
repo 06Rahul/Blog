@@ -2,9 +2,7 @@ package com.Blog.Platform.User.DTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
 
-@Data
 public class VerifyOtpRequest {
 
     @Email
@@ -13,4 +11,20 @@ public class VerifyOtpRequest {
 
     @NotBlank
     private String otp;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
 }
