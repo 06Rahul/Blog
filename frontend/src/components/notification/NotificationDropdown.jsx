@@ -115,6 +115,10 @@ export const NotificationDropdown = () => {
                 navigate(`/blogs/${notification.referenceId}`);
             } else if (notification.type === 'FOLLOW') {
                 navigate(`/profile/${notification.sender.username}`);
+            } else if (notification.type === 'MENTION') {
+                navigate(`/threads/${notification.referenceId}`);
+            } else if (notification.type === 'MENTION_BLOG') {
+                navigate(`/blogs/${notification.referenceId}`);
             }
         } catch (error) {
             console.error('Failed to handle notification click', error);

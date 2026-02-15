@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { blogService } from '../../services/blogService';
+import { userService } from '../../services/userService';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
@@ -8,7 +9,66 @@ import { Link } from 'react-router-dom';
 const CommentForm = ({ blogId, parentId = null, onSuccess, onCancel, placeholder = "What are your thoughts?" }) => {
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState('');
+    const [mentionResults, setMentionResults] = useState([]);
+    const [showMentions, setShowMentions] = useState(false);
+    const [cursorPosition, setCursorPosition] = useState(0);
+    const textareaRef = useRef(null);
     const { user } = useAuth();
+
+    // Handle Mention Search
+    useEffect(() => {
+        if (!showMentions) return;
+
+        const timer = setTimeout(async () => {
+            if (mentionQuery.length >= 1) {
+                try {
+                    const users = await userService.searchUsers(mentionQuery);
+                    setMentionResults(users);
+                } catch (error) {
+                    console.error("Search failed", error);
+                }
+            } else {
+                setMentionResults([]);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [mentionQuery, showMentions]);
+
+    const handleInput = (e) => {
+        const val = e.target.value;
+        const cursorPos = e.target.selectionStart;
+        setContent(val);
+        setCursorPosition(cursorPos);
+
+        // Detect @
+        const textBeforeCursor = val.slice(0, cursorPos);
+        const lastAt = textBeforeCursor.lastIndexOf('@');
+
+        if (lastAt !== -1) {
+            const query = textBeforeCursor.slice(lastAt + 1);
+            if (!query.includes(' ')) {
+                setMentionQuery(query);
+                setShowMentions(true);
+                return;
+            }
+        }
+        setShowMentions(false);
+    };
+
+    const insertMention = (username) => {
+        const textBeforeCursor = content.slice(0, cursorPosition);
+        const lastAt = textBeforeCursor.lastIndexOf('@');
+        const textAfterCursor = content.slice(cursorPosition);
+
+        const newText = content.slice(0, lastAt) + `@${username} ` + textAfterCursor;
+        setContent(newText);
+        setShowMentions(false);
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -49,8 +109,9 @@ const CommentForm = ({ blogId, parentId = null, onSuccess, onCancel, placeholder
     return (
         <form onSubmit={handleSubmit} className="relative my-4">
             <textarea
+                ref={textareaRef}
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={handleInput}
                 placeholder={placeholder}
                 className="
 w-full
@@ -65,11 +126,25 @@ focus:border-transparent
 min-h-[100px]
 resize-y
 "
-
-
                 required
                 autoFocus={!!parentId}
             />
+
+            {showMentions && mentionResults.length > 0 && (
+                <div className="absolute bottom-full left-0 mb-1 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                    {mentionResults.map(user => (
+                        <button
+                            type="button"
+                            key={user.id}
+                            onClick={() => insertMention(user.username)}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                        >
+                            <img src={user.profileImageUrl || `https://ui-avatars.com/api/?name=${user.username}`} className="w-5 h-5 rounded-full" alt="" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-200">{user.username}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="mt-2 flex justify-end gap-2">
                 {onCancel && (
@@ -113,7 +188,11 @@ const CommentItem = ({ comment, blogId, onReplySuccess, depth = 0 }) => {
                                 {format(new Date(comment.createdAt), 'MMM d, yyyy HH:mm')}
                             </span>
                         </div>
-                        <p className="text-gray-700 whitespace-pre-wrap text-sm sm:text-base">{comment.content}</p>
+                        <p className="text-gray-700 whitespace-pre-wrap text-sm sm:text-base">
+                            {comment.content.split(/(@\w+)/g).map((part, i) =>
+                                part.startsWith('@') ? <span key={i} className="text-primary-600 font-medium">{part}</span> : part
+                            )}
+                        </p>
                     </div>
 
                     <div className="mt-2 flex items-center gap-4">

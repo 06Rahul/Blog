@@ -37,4 +37,10 @@ export const userService = {
     });
     return response.data;
   },
+
+  // Search users
+  searchUsers: async (query) => {
+    const response = await api.get(`/user/search?query=${query}`);
+    return response.data;
+  }
 };

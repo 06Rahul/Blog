@@ -54,7 +54,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/signup",
                                 "/api/user/login",
                                 "/api/user/verify-otp",
+                                "/api/user/username/**",
                                 "/api/users/username/**",
+                                "/api/user/search/**",
+                                "/api/search/**",
                                 "/api/blogs/search/**",
                                 "/api/blogs/published/**",
                                 "/api/blogs/published",
@@ -63,7 +66,13 @@ public class SecurityConfig {
                                 "/api/users/*/following",
                                 "/api/users/*/followers/count",
                                 "/api/users/*/following/count",
+                                "/api/images/**",
                                 "/ws/chat/**")
+                        .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/communities/**",
+                                "/api/threads/**",
+                                "/api/blogs/*/likes",
+                                "/api/blogs/*/comments")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter,

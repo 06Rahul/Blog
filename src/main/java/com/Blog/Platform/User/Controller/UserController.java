@@ -23,11 +23,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/user")
 public class UserController {
     private final AuthService authService;
+    private final com.Blog.Platform.User.Service.UserService userService;
     private final Validator validator;
+    private final com.Blog.Platform.User.UserMapper.UserMapper userMapper;
 
-    public UserController(AuthService authService, Validator validator) {
+    public UserController(AuthService authService, com.Blog.Platform.User.Service.UserService userService,
+            Validator validator, com.Blog.Platform.User.UserMapper.UserMapper userMapper) {
         this.authService = authService;
+        this.userService = userService;
         this.validator = validator;
+        this.userMapper = userMapper;
     }
 
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -92,6 +97,25 @@ public class UserController {
     public ResponseEntity<SignUpResponse> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
         return ResponseEntity.ok(authService.passwordReset(request));
 
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<java.util.List<UserDTO>> searchUsers(@RequestParam String query) {
+        return ResponseEntity.ok(userService.searchUsers(query));
+    }
+
+    @GetMapping("/username/{username:.+}")
+    public ResponseEntity<UserProfileResponse> getUserByUsername(@PathVariable String username) {
+        try {
+            com.Blog.Platform.User.Model.User user = userService.findByUsername(username)
+                    .or(() -> userService.findByEmail(username)) // Fallback to email search
+                    .orElseThrow(() -> new com.Blog.Platform.User.Excepction.UserNotFoundException("User not found"));
+            return ResponseEntity.ok(userMapper.toUserProfileResponse(user));
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(UserController.class).error("Error fetching user {}: {}", username,
+                    e.getMessage(), e);
+            throw e;
+        }
     }
 
 }

@@ -1,82 +1,106 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { Home, Compass, Users, FileEdit, MessageSquare, Terminal, LogOut, Moon, Sun, LayoutDashboard } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { motion } from 'framer-motion';
 
-export const Sidebar = ({ categories = [] }) => {
-    const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const { user } = useAuth();
+export const SideBar = () => {
+    const { pathname } = useLocation();
+    const { user, logout } = useAuth();
+    const { isDarkMode, toggleTheme } = useTheme();
 
-    const handleSearch = (e) => {
-        if (e.key === 'Enter') {
-            const query = e.target.value.trim();
-            if (query) {
-                setSearchParams({ q: query });
-                navigate(`/?q=${encodeURIComponent(query)}`); // Fallback if not on home
-            }
-        }
-    };
+    const menuItems = [
+        { icon: Home, label: 'Home', path: '/' },
+        { icon: Compass, label: 'Explore', path: '/search' },
+        { icon: Users, label: 'Communities', path: '/communities' },
+        { icon: FileEdit, label: 'Drafts', path: '/dashboard' },
+        { icon: MessageSquare, label: 'Messages', path: '/messages' },
+    ];
 
-    const handleCategoryClick = (id) => {
-        setSearchParams({ category: id });
-        navigate(`/?category=${id}`);
+    const isActive = (path) => {
+        if (path === '/' && pathname === '/') return true;
+        if (path !== '/' && pathname.startsWith(path)) return true;
+        return false;
     };
 
     return (
-        <aside className="space-y-12">
-
-            {/* Search Widget */}
-            <div>
-                <h3 className="text-xs font-bold tracking-widest uppercase text-gray-900 border-b border-gray-200 pb-2 mb-6">
-                    Search
-                </h3>
-                <input
-                    type="text"
-                    placeholder="Type and hit enter..."
-                    onKeyDown={handleSearch}
-                    defaultValue={searchParams.get('q') || ''}
-                    className="w-full bg-gray-50 border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-black focus:bg-white transition-all"
-                />
+        <aside className="w-64 h-screen bg-[#0F172A] text-white flex flex-col fixed left-0 top-0 z-50 border-r border-gray-800">
+            {/* Logo Area */}
+            <div className="p-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="font-bold text-xl">B</span>
+                </div>
+                <span className="font-bold text-xl tracking-tight">BlogPlatform</span>
             </div>
 
-            {/* User/Welcome Widget */}
-            <div className="text-center bg-gray-50 p-6 rounded-sm">
-                <h3 className="text-xs font-bold tracking-widest uppercase text-gray-900 mb-4">
-                    {user ? 'Hello, ' + user.firstName : 'Welcome'}
-                </h3>
-                <p className="text-sm text-gray-500 font-serif italic leading-relaxed mb-4">
-                    {user
-                        ? "Ready to write your next story? Share your thoughts with the world."
-                        : "Discover stories, thinking, and expertise from writers on any topic."}
-                </p>
-                {!user && (
-                    <button onClick={() => navigate('/login')} className="text-xs font-bold uppercase tracking-widest border-b border-black pb-1 hover:text-gray-600">
-                        Join Community
+            {/* Navigation */}
+            <nav className="flex-1 px-4 space-y-2 mt-4">
+                {menuItems.map((item) => (
+                    <Link
+                        key={item.label}
+                        to={item.path}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive(item.path)
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
+                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                            }`}
+                    >
+                        <item.icon className={`w-5 h-5 ${isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+                        <span className="font-medium text-sm">{item.label}</span>
+                    </Link>
+                ))}
+
+                {/* Divider */}
+                <div className="my-6 border-t border-gray-800 mx-4"></div>
+
+                {/* Secondary Items */}
+                <Link
+                    to="/playground"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                >
+                    <Terminal className="w-5 h-5" />
+                    <span className="font-medium text-sm">Code Playground</span>
+                </Link>
+
+                {user && (
+                    <Link
+                        to="/dashboard"
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/dashboard') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                            }`}
+                    >
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span className="font-medium text-sm">Dashboard</span>
+                    </Link>
+                )}
+            </nav>
+
+            {/* Bottom Actions */}
+            <div className="p-4 bg-[#0F172A] border-t border-gray-800">
+                {/* Theme Toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="w-full mb-3 flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                >
+                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    <span className="font-medium text-sm">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+
+                {user ? (
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium text-sm">Logout</span>
                     </button>
+                ) : (
+                    <Link
+                        to="/login"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
+                    >
+                        <span className="font-bold text-sm">Login</span>
+                    </Link>
                 )}
             </div>
-
-            {/* Categories Widget */}
-            {categories.length > 0 && (
-                <div>
-                    <h3 className="text-xs font-bold tracking-widest uppercase text-gray-900 border-b border-gray-200 pb-2 mb-6">
-                        Topics
-                    </h3>
-                    <ul className="space-y-3">
-                        {categories.map(cat => (
-                            <li key={cat.id}>
-                                <button
-                                    onClick={() => handleCategoryClick(cat.id)}
-                                    className="flex justify-between w-full text-sm text-gray-500 hover:text-black transition-colors group"
-                                >
-                                    <span className="group-hover:translate-x-1 transition-transform">{cat.name}</span>
-                                    {cat.count !== undefined && <span className="text-gray-300 group-hover:text-black">({cat.count})</span>}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
         </aside>
     );
 };

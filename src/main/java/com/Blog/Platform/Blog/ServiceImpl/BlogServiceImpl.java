@@ -1,6 +1,5 @@
 package com.Blog.Platform.Blog.ServiceImpl;
 
-import com.Blog.Platform.AiService.Exception.AiLimitExceededException;
 import com.Blog.Platform.AiService.Service.AiService;
 import com.Blog.Platform.AiService.ServiceImpl.AsyncAiWorker;
 import com.Blog.Platform.Blog.DTO.BlogPostRequest;
@@ -15,7 +14,7 @@ import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.User.Excepction.UserNotFoundException;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,12 +38,14 @@ public class BlogServiceImpl implements BlogService {
     private final com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository;
     private final com.Blog.Platform.User.Service.FollowService followService;
     private final com.Blog.Platform.User.Service.NotificationService notificationService;
+    private final com.Blog.Platform.Community.Repository.MentionRepository mentionRepository;
 
     public BlogServiceImpl(BlogPostMapper blogPostMapper, BlogPostRepository blogPostRepository, UserRepo userRepo,
             AiService aiService, AsyncAiWorker asyncAiWorker, com.Blog.Platform.Blog.Repo.TagRepository tagRepository,
             com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository,
             com.Blog.Platform.User.Service.FollowService followService,
-            com.Blog.Platform.User.Service.NotificationService notificationService) {
+            com.Blog.Platform.User.Service.NotificationService notificationService,
+            com.Blog.Platform.Community.Repository.MentionRepository mentionRepository) {
         this.blogPostMapper = blogPostMapper;
         this.blogPostRepository = blogPostRepository;
         this.userRepo = userRepo;
@@ -54,6 +55,7 @@ public class BlogServiceImpl implements BlogService {
         this.categoryRepository = categoryRepository;
         this.followService = followService;
         this.notificationService = notificationService;
+        this.mentionRepository = mentionRepository;
     }
 
     @Override
@@ -154,6 +156,12 @@ public class BlogServiceImpl implements BlogService {
         }
 
         BlogPost savedBlog = blogPostRepository.save(blogPost);
+
+        if (savedBlog.getStatus() == BlogStatus.PUBLISHED) {
+            processMentions(savedBlog.getContent(), savedBlog.getId(),
+                    com.Blog.Platform.Community.Model.MentionType.BLOG, savedBlog.getAuthor());
+        }
+
         return blogPostMapper.toResponse(savedBlog);
     }
 
@@ -272,6 +280,9 @@ public class BlogServiceImpl implements BlogService {
 
         asyncAiWorker.generateSummary(saved.getId(), saved.getContent());
 
+        processMentions(saved.getContent(), saved.getId(), com.Blog.Platform.Community.Model.MentionType.BLOG,
+                saved.getAuthor());
+
         // Notify followers
         java.util.List<User> followers = followService.getFollowersList(saved.getAuthor().getId());
         for (User follower : followers) {
@@ -307,12 +318,45 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public BlogPost getMyBlogEntity(UUID blogId) {
-
         User author = getCurrentUser();
 
         return blogPostRepository
                 .findByIdAndAuthor(blogId, author)
                 .orElseThrow(() -> new BlogCreationException("Blog not found"));
+    }
+
+    private void processMentions(String content, UUID contentId, com.Blog.Platform.Community.Model.MentionType type,
+            User actor) {
+        if (content == null || content.isEmpty())
+            return;
+
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("@(\\w+)");
+        java.util.regex.Matcher matcher = pattern.matcher(content);
+
+        java.util.Set<String> processedUsernames = new java.util.HashSet<>();
+
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            if (processedUsernames.contains(username))
+                continue;
+            processedUsernames.add(username);
+
+            userRepo.findByUsername(username).ifPresent(mentionedUser -> {
+                if (!mentionedUser.getId().equals(actor.getId())) {
+                    com.Blog.Platform.Community.Model.Mention mention = new com.Blog.Platform.Community.Model.Mention(
+                            mentionedUser, actor, contentId, type);
+                    mentionRepository.save(mention);
+
+                    String message = actor.getUsername() + " mentioned you in a blog";
+                    notificationService.createNotification(
+                            mentionedUser,
+                            actor,
+                            com.Blog.Platform.User.Model.NotificationType.MENTION_BLOG,
+                            contentId.toString(),
+                            message);
+                }
+            });
+        }
     }
 
 }

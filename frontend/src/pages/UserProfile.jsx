@@ -29,8 +29,9 @@ export const UserProfile = () => {
     }, [user]);
 
     const loadUserProfile = async () => {
+        if (!username || username === 'undefined') return;
         try {
-            const response = await axios.get(`/api/users/username/${username}`);
+            const response = await axios.get(`/api/user/username/${encodeURIComponent(username)}`);
             setUser(response.data);
         } catch (error) {
             toast.error('Failed to load user profile');

@@ -15,4 +15,6 @@ public interface PendingUserRepo extends JpaRepository<PendingUser, UUID> {
     List<PendingUser> findByExpiresAtBefore(LocalDateTime dateTime);
 
     void deleteByExpiresAtBefore(LocalDateTime dateTime);
+
+    void deleteByEmail(String email);
 }

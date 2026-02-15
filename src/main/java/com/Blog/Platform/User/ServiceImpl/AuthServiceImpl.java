@@ -21,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -102,6 +104,9 @@ public class AuthServiceImpl implements AuthService {
             throw new UserAlreadyExistsException("Username already taken");
         }
 
+        // Clean up any previous pending registrations for this email
+        pendingUserRepo.deleteByEmail(request.getEmail());
+
         String otp = OTPGenerator.generateOtp();
         log.info("Generated OTP for {}: {}", request.getEmail(), otp);
 
@@ -133,10 +138,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public SignInResponse login(SignInRequest request, HttpServletResponse response) {
 
+        log.info("Attempting login for email: {}", request.getEmail());
         User user = userRepo.findByEmail(request.getEmail())
-                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed: User not found for email: {}", request.getEmail());
+                    return new InvalidCredentialsException("Invalid credentials");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Invalid credentials");
@@ -145,23 +155,26 @@ public class AuthServiceImpl implements AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepo.save(user);
 
+        log.info("Generating tokens for user: {}", user.getEmail());
         var userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
 
         String accessToken = jwtUtil.generateAccessToken(userDetails);
         String refreshToken = jwtUtil.generateRefreshToken(userDetails);
 
+        log.info("Storing refresh token and setting cookie for user: {}", user.getEmail());
         // store refresh token in DB (rotation support)
         refreshTokenService.createRefreshToken(user, refreshToken);
 
         // set refresh token as HttpOnly cookie
         cookieUtil.setRefreshToken(response, refreshToken);
 
+        log.info("Login successful for user: {}", user.getEmail());
         return new SignInResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getUsername(),
-                user.getRole().name(),
-                user.getProfileImageUrl(),
+                user.getRole() != null ? user.getRole().name() : "USER",
+                userMapper.sanitizeImageUrl(user.getProfileImageUrl()),
                 accessToken);
     }
 
@@ -182,6 +195,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public TokenRefreshResponse refreshToken(HttpServletRequest request,
             HttpServletResponse response) {
 
@@ -224,10 +238,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public SignUpResponse verifyOtp(VerifyOtpRequest request) {
+        log.info("Verifying OTP for email: {}", request.getEmail());
 
         PendingUser pendingUser = pendingUserRepo.findByEmail(request.getEmail())
-                .orElseThrow(() -> new InvalidCredentialsException("No pending registration found"));
+                .orElseThrow(() -> {
+                    log.error("No pending registration found for email: {}", request.getEmail());
+                    return new InvalidCredentialsException("No pending registration found");
+                });
 
         // 1️⃣ Check expiry
         if (pendingUser.getExpiresAt().isBefore(LocalDateTime.now())) {

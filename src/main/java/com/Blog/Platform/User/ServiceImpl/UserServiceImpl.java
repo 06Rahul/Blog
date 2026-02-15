@@ -10,6 +10,7 @@ import com.Blog.Platform.User.Excepction.UserNotFoundException;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
 import com.Blog.Platform.User.Service.UserService;
+import com.Blog.Platform.User.UserMapper.UserMapper;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +26,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
     private final FileStorageServiceImpl fileStorageService;
     private final AiUsageService aiUsageService;
+    private final UserMapper userMapper;
 
     public UserServiceImpl(UserRepo userRepo, FileStorageServiceImpl fileStorageService,
-            AiUsageService aiUsageService) {
+            AiUsageService aiUsageService, UserMapper userMapper) {
         this.userRepo = userRepo;
         this.fileStorageService = fileStorageService;
         this.aiUsageService = aiUsageService;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -138,11 +141,28 @@ public class UserServiceImpl implements UserService {
                 user.getBio(),
                 user.getWebsite(),
                 user.getMobileNumber(),
-                user.getProfileImageUrl(),
+                userMapper.sanitizeImageUrl(user.getProfileImageUrl()),
                 user.getRole().name(),
                 user.isEmailVerified(),
                 user.isMobileVerified(),
                 usage.getUsed(),
                 usage.getLimit());
+    }
+
+    @Override
+    public java.util.List<com.Blog.Platform.User.DTO.UserDTO> searchUsers(String query) {
+        java.util.List<User> users;
+        if (query == null || query.trim().isEmpty()) {
+            users = userRepo.findAll(org.springframework.data.domain.PageRequest.of(0, 10)).getContent();
+        } else {
+            users = userRepo.findByUsernameContainingIgnoreCase(query);
+        }
+
+        return users.stream()
+                .map(user -> new com.Blog.Platform.User.DTO.UserDTO(
+                        user.getId(),
+                        user.getActualUsername(),
+                        userMapper.sanitizeImageUrl(user.getProfileImageUrl())))
+                .collect(java.util.stream.Collectors.toList());
     }
 }

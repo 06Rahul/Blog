@@ -29,10 +29,11 @@ public class ConversationController {
      * Get or create conversation with another user
      */
     @PostMapping("/with/{userId}")
-    public ResponseEntity<Void> getOrCreateConversation(@PathVariable UUID userId) {
+    public ResponseEntity<ConversationResponse> getOrCreateConversation(@PathVariable UUID userId) {
         UUID currentUserId = SecurityUtil.getCurrentUserId();
-        conversationService.getOrCreateConversation(currentUserId, userId);
-        return ResponseEntity.ok().build();
+        com.Blog.Platform.User.Model.Conversation conversation = conversationService
+                .getOrCreateConversation(currentUserId, userId);
+        return ResponseEntity.ok(conversationService.getConversationById(conversation.getId()));
     }
 
     /**
