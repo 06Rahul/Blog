@@ -172,6 +172,7 @@ export const BlogView = () => {
           <div className="text-gray-800 leading-relaxed ql-editor">
             {parse(blog.content, {
               replace: (domNode) => {
+                // Handle Code Blocks
                 if (domNode.name === 'pre' && domNode.children && domNode.children.length > 0) {
                   const codeNode = domNode.children[0];
                   if (codeNode.name === 'code') {
@@ -192,6 +193,21 @@ export const BlogView = () => {
                     if (language) {
                       return <ExecutableCodeBlock language={language} code={code} />;
                     }
+                  }
+                }
+
+                // Handle Mentions
+                if (domNode.name === 'span' && domNode.attribs && domNode.attribs.class && domNode.attribs.class.includes('mention')) {
+                  const username = domNode.attribs['data-id'] || (domNode.children[0]?.data ? domNode.children[0].data.replace('@', '') : '');
+                  if (username) {
+                    return (
+                      <Link
+                        to={`/profile/${username}`}
+                        className="text-primary-600 hover:underline font-semibold bg-indigo-50 px-1 rounded mx-0.5"
+                      >
+                        @{username}
+                      </Link>
+                    );
                   }
                 }
               }

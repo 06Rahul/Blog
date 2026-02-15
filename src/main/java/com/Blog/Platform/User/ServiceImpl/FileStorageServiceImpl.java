@@ -35,7 +35,7 @@ public class FileStorageServiceImpl {
             Files.createDirectories(Path.of(storageDir));
             Path path = Path.of(storageDir + fileName);
             Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            return path.toString();
+            return "/api/images/" + fileName;
         } catch (IOException e) {
             log.error("Error saving image file: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to save image file", e);
@@ -72,7 +72,7 @@ public class FileStorageServiceImpl {
             Path path = Path.of(tempDir + fileName);
             Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
             log.debug("Saved temporary image: {}", path);
-            return path.toString();
+            return "/api/images/temp/" + fileName;
         } catch (IOException e) {
             log.error("Error saving temporary image file: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to save temporary image file", e);
@@ -88,20 +88,28 @@ public class FileStorageServiceImpl {
                 return null;
             }
 
-            Path sourcePath = Path.of(tempPath);
+            // Extract filename from path (could be "/api/images/temp/uuid.jpg")
+            String fileName = tempPath;
+            int lastSlash = tempPath.lastIndexOf("/");
+            if (lastSlash >= 0) {
+                fileName = tempPath.substring(lastSlash + 1);
+            }
+
+            String tempDir = storageProperties.getImageDir() + "temp/";
+            Path sourcePath = Path.of(tempDir + fileName);
+
             if (!Files.exists(sourcePath)) {
-                log.warn("Temporary image not found: {}", tempPath);
+                log.warn("Temporary image not found at: {}", sourcePath);
                 return null;
             }
 
             String permanentDir = storageProperties.getImageDir();
-            String fileName = sourcePath.getFileName().toString();
             Files.createDirectories(Path.of(permanentDir));
             Path targetPath = Path.of(permanentDir + fileName);
 
             Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            log.debug("Moved image from temp to permanent: {} -> {}", tempPath, targetPath);
-            return targetPath.toString();
+            log.debug("Moved image from temp to permanent: {} -> {}", sourcePath, targetPath);
+            return "/api/images/" + fileName;
         } catch (IOException e) {
             log.error("Error moving temporary image to permanent location: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to move image to permanent location", e);

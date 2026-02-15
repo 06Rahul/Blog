@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer, ReactRenderer } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Collaboration from '@tiptap/extension-collaboration'
 import * as Y from 'yjs'
@@ -13,8 +13,13 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import Mention from '@tiptap/extension-mention'
 import { common, createLowlight } from 'lowlight'
 import { CodeBlockComponent } from '../compiler/CodeBlockComponent'
+import { MentionList } from './MentionList'
+import tippy from 'tippy.js'
+import 'tippy.js/dist/tippy.css'
+import { userService } from '../../services/userService'
 
 // Configure lowlight
 const lowlight = createLowlight(common)
@@ -241,6 +246,71 @@ const TiptapEditorInner = ({ provider, ydoc, content, onChange, status, user, is
             }),
             Placeholder.configure({
                 placeholder: 'Start writing your story...',
+            }),
+            Mention.configure({
+                HTMLAttributes: {
+                    class: 'mention text-indigo-600 font-semibold bg-indigo-50 px-1 rounded mx-0.5',
+                },
+                suggestion: {
+                    items: async ({ query }) => {
+                        try {
+                            const users = await userService.searchUsers(query)
+                            return users.slice(0, 5)
+                        } catch (e) {
+                            return []
+                        }
+                    },
+                    render: () => {
+                        let component
+                        let popup
+
+                        return {
+                            onStart: props => {
+                                component = new ReactRenderer(MentionList, {
+                                    props,
+                                    editor: props.editor,
+                                })
+
+                                if (!props.clientRect) {
+                                    return
+                                }
+
+                                popup = tippy('body', {
+                                    getReferenceClientRect: props.clientRect,
+                                    appendTo: () => document.body,
+                                    content: component.element,
+                                    showOnCreate: true,
+                                    interactive: true,
+                                    trigger: 'manual',
+                                    placement: 'bottom-start',
+                                })
+                            },
+                            onUpdate(props) {
+                                component.updateProps(props)
+
+                                if (!props.clientRect) {
+                                    return
+                                }
+
+                                popup[0].setProps({
+                                    getReferenceClientRect: props.clientRect,
+                                })
+                            },
+                            onKeyDown(props) {
+                                if (props.event.key === 'Escape') {
+                                    popup[0].hide()
+                                    return true
+                                }
+
+                                return component.ref?.onKeyDown(props)
+                            },
+                            onExit() {
+                                popup[0].destroy()
+                                component.destroy()
+                            },
+                        }
+                    },
+                },
             }),
         ]
 

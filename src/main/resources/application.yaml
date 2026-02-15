@@ -69,7 +69,6 @@
 ##        starttls:
 ##          enable: true
 
-
 spring:
   application:
     name: UserService
@@ -112,6 +111,18 @@ server:
   port: 8080
   tomcat:
     max-swallow-size: 10MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,mappings
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 app:
   storage:

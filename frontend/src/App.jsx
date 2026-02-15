@@ -19,6 +19,11 @@ import { AIAssistantPage } from './pages/AIAssistantPage';
 import { UserProfile } from './pages/UserProfile';
 import { MessagingPage } from './pages/MessagingPage';
 import { CodePlayground } from './components/compiler/CodePlayground';
+import { CommunitiesPage } from './pages/CommunitiesPage';
+import { CommunityDetailPage } from './pages/CommunityDetailPage';
+import { ThreadPage } from './pages/ThreadPage';
+import { CreateThreadPage } from './pages/CreateThreadPage';
+import { SearchPage } from './pages/SearchPage';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -51,7 +56,7 @@ function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/verify-otp" element={<OTPVerification />} />
                 <Route path="/" element={<Home />} />
-                <Route path="/search" element={<BlogSearch />} />
+                <Route path="/search" element={<SearchPage />} />
 
                 {/* Protected Routes inside Layout */}
                 <Route
@@ -96,6 +101,19 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MessagingPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Community Routes */}
+                <Route path="/communities" element={<CommunitiesPage />} />
+                <Route path="/communities/:id" element={<CommunityDetailPage />} />
+                <Route path="/threads/:threadId" element={<ThreadPage />} />
+                <Route
+                  path="/communities/:communityId/submit"
+                  element={
+                    <ProtectedRoute>
+                      <CreateThreadPage />
                     </ProtectedRoute>
                   }
                 />

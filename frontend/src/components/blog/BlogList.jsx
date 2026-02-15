@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { blogService } from '../../services/blogService';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { SaveButton } from './SaveButton';
 import { useAuth } from '../../context/AuthContext';
-import { savedBlogService } from '../../services/savedBlogService';
+import { Heart, MessageCircle, Bookmark, Share2, MoreHorizontal } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export const BlogList = ({
   type = 'published',
@@ -24,11 +24,15 @@ export const BlogList = ({
   const { user } = useAuth();
 
   const currentPage = controlledPage !== undefined ? controlledPage : internalPage;
-  const isDashboardView = ['drafts', 'my-published', 'saved'].includes(type);
 
   useEffect(() => {
     loadBlogs();
   }, [currentPage, type, categoryId, tag, username, searchQuery]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setInternalPage(0);
+  }, [type, categoryId, tag, username, searchQuery]);
 
   const loadBlogs = async () => {
     setLoading(true);
@@ -48,8 +52,6 @@ export const BlogList = ({
         response = await blogService.searchUnified(searchQuery, currentPage, size);
       } else if (type === 'feed') {
         response = await blogService.getFeedBlogs(currentPage, size);
-      } else if (type === 'saved') {
-        response = await savedBlogService.getSavedBlogs(currentPage, size);
       } else {
         response = await blogService.getPublishedBlogs(currentPage, size);
       }
@@ -69,6 +71,20 @@ export const BlogList = ({
     }
   };
 
+  const stripHtml = (html) => {
+    if (!html) return '';
+    try {
+      const tmp = document.createElement("DIV");
+      tmp.innerHTML = html;
+      const text = tmp.textContent || tmp.innerText || "";
+      // Clean up extra whitespace and return trimmed text
+      return text.trim().replace(/\s+/g, ' ');
+    } catch (e) {
+      // Fallback: use regex to strip tags if DOM manipulation fails
+      return html.replace(/<[^>]*>/g, '').trim().replace(/\s+/g, ' ');
+    }
+  };
+
   const handlePublish = async (blogId) => {
     try {
       await blogService.publishBlog(blogId);
@@ -80,10 +96,7 @@ export const BlogList = ({
   };
 
   const handleDelete = async (blogId) => {
-    if (!window.confirm('Are you sure you want to delete this blog?')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete this blog?')) return;
     try {
       await blogService.deleteBlog(blogId);
       toast.success('Blog deleted successfully');
@@ -93,205 +106,196 @@ export const BlogList = ({
     }
   };
 
+  const handleLike = async (blogId) => {
+    try {
+      await blogService.toggleLike(blogId);
+      setBlogs(prev => prev.map(b => b.id === blogId ? { ...b, isLiked: !b.isLiked, likeCount: b.isLiked ? (b.likeCount || 0) - 1 : (b.likeCount || 0) + 1 } : b));
+    } catch (error) {
+      toast.error('Action failed');
+    }
+  };
+
+  const handleBookmark = async (blogId) => {
+    try {
+      const { savedBlogService } = await import('../../services/savedBlogService');
+      const isCurrentlySaved = blogs.find(b => b.id === blogId)?.isSaved;
+
+      if (isCurrentlySaved) {
+        await savedBlogService.unsaveBlog(blogId);
+        toast.success('Removed from bookmarks');
+      } else {
+        await savedBlogService.saveBlog(blogId);
+        toast.success('Added to bookmarks');
+      }
+
+      setBlogs(prev => prev.map(b => b.id === blogId ? { ...b, isSaved: !isCurrentlySaved } : b));
+    } catch (error) {
+      toast.error('Action failed');
+    }
+  };
+
+  const handleShare = (blogId) => {
+    const url = `${window.location.origin}/blogs/${blogId}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link copied to clipboard');
+  };
+
+  const BlogCard = ({ blog }) => {
+    const isDashboard = type === 'drafts' || type === 'my-published';
+
+    return (
+      <motion.article
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all mb-6 relative group"
+      >
+        {/* Author Header */}
+        <div className="flex items-center justify-between mb-4">
+          <Link to={`/profile/${blog.authorUsername}`} className="flex items-center gap-3 group">
+            {blog.authorProfileImageUrl ? (
+              <img src={blog.authorProfileImageUrl} alt={blog.authorUsername} className="w-10 h-10 rounded-full object-cover" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                {blog.authorUsername?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h4 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-blue-600 transition-colors">
+                {blog.authorUsername || 'Blogger'}
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {blog.publishedAt ? format(new Date(blog.publishedAt), 'MMM d, yyyy') : 'Draft'}
+              </p>
+            </div>
+          </Link>
+          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <Link to={`/blogs/${blog.id}`} className="block group">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+            {blog.title}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed line-clamp-3 mb-4">
+            {stripHtml(blog.summary || blog.content)}
+          </p>
+        </Link>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-6">
+            {!isDashboard && (
+              <>
+                <button
+                  onClick={() => handleLike(blog.id)}
+                  className={`flex items-center gap-2 transition-colors text-sm font-medium group ${blog.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`}
+                >
+                  <Heart className={`w-5 h-5 ${blog.isLiked ? 'fill-current' : 'group-hover:fill-current'}`} />
+                  <span>{blog.likeCount || 0}</span>
+                </button>
+                <Link to={`/blogs/${blog.id}#comments`} className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors text-sm font-medium">
+                  <MessageCircle className="w-5 h-5" />
+                  <span>Comment</span>
+                </Link>
+              </>
+            )}
+
+            {isDashboard && (
+              <div className="flex items-center gap-4">
+                <Link to={`/blogs/${blog.id}/edit`} className="text-sm font-bold text-blue-600 hover:text-blue-800">
+                  Edit
+                </Link>
+                <button onClick={() => handleDelete(blog.id)} className="text-sm font-bold text-red-500 hover:text-red-700">
+                  Delete
+                </button>
+                {type === 'drafts' && (
+                  <button onClick={() => handlePublish(blog.id)} className="text-sm font-bold text-green-600 hover:text-green-800">
+                    Publish
+                  </button>
+                )}
+              </div>
+            )}
+
+          </div>
+          <div className="flex items-center gap-4">
+            {!isDashboard && (
+              <>
+                <button
+                  onClick={() => handleShare(blog.id)}
+                  className="text-gray-400 hover:text-blue-500 transition-colors"
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleBookmark(blog.id)}
+                  className={`transition-colors ${blog.isSaved ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}`}
+                >
+                  <Bookmark className={`w-5 h-5 ${blog.isSaved ? 'fill-current' : ''}`} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </motion.article>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-64 animate-pulse">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+              <div className="space-y-2">
+                <div className="w-32 h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+                <div className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="w-3/4 h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {blogs.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-gray-400 font-serif italic text-xl mb-6">No stories found.</p>
-          {(type === 'drafts' || type === 'my-published') && (
-            <Link
-              to="/blogs/new"
-              // className="inline-block border border-gray-900 dark:border-gray-100 px-8 py-3 text-gray-900 dark:text-gray-100 text-xs font-bold tracking-widest uppercase hover:bg-gray-900 dark:hover:bg-gray-100 hover:text-white dark:hover:text-gray-900 transition-all"
-              className="
-inline-block
-border border-cyan-300 dark:border-cyan-600
-bg-cyan-50 dark:bg-cyan-950
-px-8 py-3
-text-cyan-700 dark:text-cyan-200
-text-xs font-bold tracking-widest uppercase
-hover:bg-cyan-500 dark:hover:bg-cyan-600
-hover:text-white
-transition-all duration-300
-"
-
-            >
-              Start Writing
-            </Link>
-          )}
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No stories found.</p>
+          <Link to="/blogs/new" className="text-blue-600 font-semibold hover:underline">
+            Write your first story
+          </Link>
         </div>
       ) : (
         <>
-          {blogs.map((blog) => (
-            isDashboardView ? (
-              // Compact List View for Dashboard
-              <div
-                key={blog.id}
-                className="
-    group
-    flex items-center justify-between
-    py-6
-    bg-gray-50
-    border-b border-gray-200
-    rounded-lg
-    hover:bg-gray-100
-    -mx-4 px-4
-    transition-colors
-  "
-              >
-
-
-                <div className="flex-1 min-w-0 pr-8">
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1">
-                    {blog.publishedAt && (
-                      <time>{format(new Date(blog.publishedAt), 'MMM d, yyyy')}</time>
-                    )}
-                    {type === 'saved' && blog.authorUsername && (
-                      <>
-                        <span>•</span>
-                        <span>by {blog.authorUsername}</span>
-                      </>
-                    )}
-                    {blog.tags && blog.tags.length > 0 && (
-                      <div className="flex gap-2">
-                        {blog.tags.slice(0, 2).map((tag, i) => (
-                          <span key={i} className="bg-gray-100 text-gray-500 px-1.5 rounded text-[10px] uppercase tracking-wide">#{tag}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-serif font-medium text-gray-900 truncate">
-                    <Link to={`/blogs/${blog.id}`} className="hover:text-black transition-colors">
-                      {blog.title}
-                    </Link>
-                  </h3>
-                  {blog.summary && <p className="text-sm text-gray-500 line-clamp-1 mt-1 font-serif italic">{blog.summary}</p>}
-                </div>
-
-                <div className="flex items-center gap-3 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                  {/* Dashboard Actions */}
-                  {(type === 'drafts' || type === 'my-published') && (
-                    <>
-                      {type === 'drafts' && (
-                        <button
-                          onClick={() => handlePublish(blog.id)}
-                          className="text-xs font-bold uppercase tracking-wider text-green-600 hover:text-green-800"
-                        >
-                          Publish
-                        </button>
-                      )}
-                      <Link
-                        to={`/blogs/${blog.id}/edit`}
-                        className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-black"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(blog.id)}
-                        className="text-xs font-bold uppercase tracking-wider text-red-300 hover:text-red-500"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                  {user && type === 'saved' && (
-                    <SaveButton blogId={blog.id} minimal={true} />
-                  )}
-                </div>
-              </div>
-            ) : (
-              // Editorial View for Feed
-              <article key={blog.id} className="flex flex-col items-center text-center pb-20 border-b border-gray-100 last:border-0 last:pb-0">
-
-                {/* Date */}
-                {blog.publishedAt && (
-                  <time className="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase mb-4 block">
-                    {format(new Date(blog.publishedAt), 'MMMM d, yyyy')}
-                  </time>
-                )}
-
-                {/* Title */}
-                <h2 className="text-3xl md:text-4xl font-serif text-gray-900 mb-6 leading-tight max-w-2xl">
-                  <Link to={`/blogs/${blog.id}`} className="hover:text-gray-600 transition-colors">
-                    {blog.title}
-                  </Link>
-                </h2>
-
-                {/* Summary/Excerpt */}
-                {blog.summary && (
-                  <p className="text-gray-500 font-serif text-lg leading-relaxed mb-8 max-w-2xl line-clamp-3">
-                    {blog.summary}
-                  </p>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-4">
-                  <Link
-                    to={`/blogs/${blog.id}`}
-                    className="
-inline-block
-border border-cyan-300 dark:border-cyan-600
-bg-cyan-50 dark:bg-cyan-950
-px-8 py-3
-text-cyan-700 dark:text-cyan-200
-text-xs font-bold tracking-widest uppercase
-hover:bg-cyan-500 dark:hover:bg-cyan-600
-hover:text-white
-transition-all duration-300
-rounded-full
-rounded-lg
-hover:scale-[1.02]
-" >
-                    Continue Reading
-                  </Link>
-
-                  {/* Minimal Save for Feed */}
-                  {user && (
-                    <div className="ml-2">
-                      <SaveButton blogId={blog.id} minimal={true} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Tags */}
-                {blog.tags && blog.tags.length > 0 && (
-                  <div className="mt-8 flex gap-2 justify-center">
-                    {blog.tags.slice(0, 3).map((tag, i) => (
-                      <Link key={i} to={`/search?tag=${tag}`} className="text-[10px] uppercase tracking-wider text-gray-400 hover:text-black hover:underline decoration-1 underline-offset-4 transition-colors">#{tag}</Link>
-                    ))}
-                  </div>
-                )}
-
-              </article>
-            )
-          ))}
-
-          {/* Internal Pagination - Removed in favor of External, only show if external not controlling */}
-          {totalPages > 1 && controlledPage === undefined && (
-            <div className="flex justify-center gap-8 pt-12 border-t border-gray-100">
+          {blogs.map(blog => <BlogCard key={blog.id} blog={blog} />)}
+          
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-8 pb-8">
               <button
-                onClick={() => setInternalPage((p) => Math.max(0, p - 1))}
                 disabled={currentPage === 0}
-                className="text-xs font-bold tracking-widest uppercase text-gray-400 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                onClick={() => setInternalPage(p => Math.max(0, p - 1))}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                &larr; Previous
+                Previous
               </button>
-              <span className="text-xs font-bold tracking-widest uppercase text-black">
-                Page {currentPage + 1}
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Page {currentPage + 1} of {totalPages}
               </span>
               <button
-                onClick={() => setInternalPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={currentPage >= totalPages - 1}
-                className="text-xs font-bold tracking-widest uppercase text-gray-400 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                onClick={() => setInternalPage(p => p + 1)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Next &rarr;
+                Next
               </button>
             </div>
           )}

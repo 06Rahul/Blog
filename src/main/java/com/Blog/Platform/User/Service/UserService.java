@@ -1,6 +1,7 @@
 package com.Blog.Platform.User.Service;
 
 import com.Blog.Platform.User.DTO.ProfileUpdateRequest;
+import com.Blog.Platform.User.DTO.UserDTO;
 import com.Blog.Platform.User.DTO.UserProfileResponse;
 import com.Blog.Platform.User.Model.User;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,4 +26,6 @@ public interface UserService {
     UserProfileResponse updateProfileImage(MultipartFile image);
 
     User getCurrentUser();
+
+    java.util.List<UserDTO> searchUsers(String query);
 }
