@@ -1,4 +1,3 @@
-#spring:
 #  application:
 #    name: UserService
 #
@@ -87,7 +86,7 @@ spring:
   security:
     user:
       name: user
-      password: 0000
+      password: password
 
   servlet:
     multipart:
@@ -98,8 +97,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: rahulmamgain269@gmail.com
-    password: bdqukuzslbfhddxl
+    username: user
+    password: password
     properties:
       mail:
         smtp:
@@ -135,5 +134,5 @@ jwt:
 
 gemini:
   api:
-    key: AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
-    base-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+    key: key
+    base-url: url
