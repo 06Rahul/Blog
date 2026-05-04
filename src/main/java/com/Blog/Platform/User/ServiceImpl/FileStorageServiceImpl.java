@@ -1,7 +1,6 @@
 package com.Blog.Platform.User.ServiceImpl;
 
 import com.Blog.Platform.User.Config.StorageProperties;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -9,22 +8,129 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
-@RequiredArgsConstructor @Service
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Service
 public class FileStorageServiceImpl {
 
-    private  final StorageProperties storageProperties;
+    private static final Logger log = LoggerFactory.getLogger(FileStorageServiceImpl.class);
 
-    public String saveImage(MultipartFile file){
+    private final StorageProperties storageProperties;
+
+    public FileStorageServiceImpl(StorageProperties storageProperties) {
+        this.storageProperties = storageProperties;
+    }
+
+    public String saveImage(MultipartFile file) {
         try {
             String storageDir = storageProperties.getImageDir();
-            String fileName = file.getOriginalFilename();
+            String originalFileName = file.getOriginalFilename();
+            String fileExtension = originalFileName != null && originalFileName.contains(".")
+                    ? originalFileName.substring(originalFileName.lastIndexOf("."))
+                    : "";
+            String fileName = UUID.randomUUID().toString() + fileExtension;
             Files.createDirectories(Path.of(storageDir));
             Path path = Path.of(storageDir + fileName);
             Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            return  path.toString();
+            return "/api/images/" + fileName;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("Error saving image file: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save image file", e);
+        }
+    }
+
+    public void deleteImage(String imagePath) {
+        try {
+            if (imagePath != null && !imagePath.isBlank()) {
+                Path path = Path.of(imagePath);
+                if (Files.exists(path)) {
+                    Files.delete(path);
+                    log.debug("Deleted image file: {}", imagePath);
+                }
+            }
+        } catch (IOException e) {
+            log.warn("Failed to delete image file: {}", imagePath, e);
+            // Don't throw exception - deletion failure shouldn't block the operation
+        }
+    }
+
+    /**
+     * Save image to temporary directory during registration
+     */
+    public String saveTempImage(MultipartFile file) {
+        try {
+            String tempDir = storageProperties.getImageDir() + "temp/";
+            String originalFileName = file.getOriginalFilename();
+            String fileExtension = originalFileName != null && originalFileName.contains(".")
+                    ? originalFileName.substring(originalFileName.lastIndexOf("."))
+                    : "";
+            String fileName = UUID.randomUUID().toString() + fileExtension;
+            Files.createDirectories(Path.of(tempDir));
+            Path path = Path.of(tempDir + fileName);
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+            log.debug("Saved temporary image: {}", path);
+            return "/api/images/temp/" + fileName;
+        } catch (IOException e) {
+            log.error("Error saving temporary image file: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save temporary image file", e);
+        }
+    }
+
+    /**
+     * Move temporary image to permanent location after OTP verification
+     */
+    public String moveTempToPermanent(String tempPath) {
+        try {
+            if (tempPath == null || tempPath.isBlank()) {
+                return null;
+            }
+
+            // Extract filename from path (could be "/api/images/temp/uuid.jpg")
+            String fileName = tempPath;
+            int lastSlash = tempPath.lastIndexOf("/");
+            if (lastSlash >= 0) {
+                fileName = tempPath.substring(lastSlash + 1);
+            }
+
+            String tempDir = storageProperties.getImageDir() + "temp/";
+            Path sourcePath = Path.of(tempDir + fileName);
+
+            if (!Files.exists(sourcePath)) {
+                log.warn("Temporary image not found at: {}", sourcePath);
+                return null;
+            }
+
+            String permanentDir = storageProperties.getImageDir();
+            Files.createDirectories(Path.of(permanentDir));
+            Path targetPath = Path.of(permanentDir + fileName);
+
+            Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            log.debug("Moved image from temp to permanent: {} -> {}", sourcePath, targetPath);
+            return "/api/images/" + fileName;
+        } catch (IOException e) {
+            log.error("Error moving temporary image to permanent location: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to move image to permanent location", e);
+        }
+    }
+
+    /**
+     * Delete temporary image file
+     */
+    public void deleteTempImage(String tempPath) {
+        try {
+            if (tempPath != null && !tempPath.isBlank()) {
+                Path path = Path.of(tempPath);
+                if (Files.exists(path)) {
+                    Files.delete(path);
+                    log.debug("Deleted temporary image file: {}", tempPath);
+                }
+            }
+        } catch (IOException e) {
+            log.warn("Failed to delete temporary image file: {}", tempPath, e);
+            // Don't throw exception - deletion failure shouldn't block the operation
         }
     }
 }

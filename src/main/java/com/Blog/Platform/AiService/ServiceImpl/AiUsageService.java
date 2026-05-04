@@ -10,7 +10,7 @@ import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.User.Model.Role;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,11 +18,15 @@ import java.time.LocalDate;
 import static com.Blog.Platform.AiService.Model.AiFeature.*;
 
 @Service
-@RequiredArgsConstructor
 public class AiUsageService {
 
     private final AiUsageRepository repo;
     private final UserRepo userRepo;
+
+    public AiUsageService(AiUsageRepository repo, UserRepo userRepo) {
+        this.repo = repo;
+        this.userRepo = userRepo;
+    }
 
     public void validateAndIncrement(AiFeature feature) {
 
@@ -44,8 +48,7 @@ public class AiUsageService {
 
         if (usage.getCount() >= limit) {
             throw new AiLimitExceededException(
-                    feature + " AI limit exceeded"
-            );
+                    feature + " AI limit exceeded");
         }
 
         usage.setCount(usage.getCount() + 1);
@@ -67,8 +70,7 @@ public class AiUsageService {
         return new AiUsageResponse(
                 used,
                 limit,
-                Math.max(limit - used, 0)
-        );
+                Math.max(limit - used, 0));
     }
 
     /* ===================== HELPERS ===================== */
@@ -79,10 +81,10 @@ public class AiUsageService {
         }
 
         return switch (feature) {
-            case SUMMARY -> 2;
-            case GRAMMAR -> 5;
-            case ENHANCE -> 3;
-            case TITLE -> 5;
+            case SUMMARY -> 20;
+            case GRAMMAR -> 50;
+            case ENHANCE -> 30;
+            case TITLE -> 50;
             default -> 0;
         };
     }
@@ -91,11 +93,11 @@ public class AiUsageService {
         if (user.getRole() == Role.ADMIN) {
             return Integer.MAX_VALUE;
         }
-        return 10;
+        return 1000;
     }
 
     private User getCurrentUser() {
-        String email = SecurityUtil.getCurrentUserEmai();
+        String email = SecurityUtil.getCurrentUserEmail();
         return userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }

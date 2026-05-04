@@ -1,6 +1,5 @@
 package com.Blog.Platform.Blog.ServiceImpl;
 
-import com.Blog.Platform.AiService.Exception.AiLimitExceededException;
 import com.Blog.Platform.AiService.Service.AiService;
 import com.Blog.Platform.AiService.ServiceImpl.AsyncAiWorker;
 import com.Blog.Platform.Blog.DTO.BlogPostRequest;
@@ -15,26 +14,63 @@ import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.User.Excepction.UserNotFoundException;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 @Service
-@RequiredArgsConstructor
-@Transactional  @Slf4j
+@Transactional
 public class BlogServiceImpl implements BlogService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BlogServiceImpl.class);
 
     private final BlogPostMapper blogPostMapper;
     private final BlogPostRepository blogPostRepository;
     private final UserRepo userRepo;
     private final AiService aiService;
     private final AsyncAiWorker asyncAiWorker;
+    private final com.Blog.Platform.Blog.Repo.TagRepository tagRepository;
+    private final com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository;
+    private final com.Blog.Platform.User.Service.FollowService followService;
+    private final com.Blog.Platform.User.Service.NotificationService notificationService;
+    private final com.Blog.Platform.Community.Repository.MentionRepository mentionRepository;
 
+    public BlogServiceImpl(BlogPostMapper blogPostMapper, BlogPostRepository blogPostRepository, UserRepo userRepo,
+            AiService aiService, AsyncAiWorker asyncAiWorker, com.Blog.Platform.Blog.Repo.TagRepository tagRepository,
+            com.Blog.Platform.Blog.Repo.CategoryRepository categoryRepository,
+            com.Blog.Platform.User.Service.FollowService followService,
+            com.Blog.Platform.User.Service.NotificationService notificationService,
+            com.Blog.Platform.Community.Repository.MentionRepository mentionRepository) {
+        this.blogPostMapper = blogPostMapper;
+        this.blogPostRepository = blogPostRepository;
+        this.userRepo = userRepo;
+        this.aiService = aiService;
+        this.asyncAiWorker = asyncAiWorker;
+        this.tagRepository = tagRepository;
+        this.categoryRepository = categoryRepository;
+        this.followService = followService;
+        this.notificationService = notificationService;
+        this.mentionRepository = mentionRepository;
+    }
+
+    @Override
+    public Page<BlogPostResponse> getFeedBlogs(Pageable pageable) {
+        User currentUser = getCurrentUser();
+        java.util.List<User> following = followService.getFollowingUsers(currentUser.getId());
+
+        if (following.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return blogPostRepository
+                .findByAuthorIn(following, pageable)
+                .map(blogPostMapper::toResponse);
+    }
 
     @Override
     public Page<BlogPostResponse> searchByTitle(String title, Pageable pageable) {
@@ -58,6 +94,19 @@ public class BlogServiceImpl implements BlogService {
                 .map(blogPostMapper::toResponse);
     }
 
+    @Override
+    public Page<BlogPostResponse> searchByCategory(UUID categoryId, Pageable pageable) {
+        return blogPostRepository
+                .findByCategoryId(categoryId, pageable)
+                .map(blogPostMapper::toResponse);
+    }
+
+    @Override
+    public Page<BlogPostResponse> searchBlogs(String query, UUID categoryId, Pageable pageable) {
+        return blogPostRepository
+                .searchEverywhere(query, categoryId, pageable)
+                .map(blogPostMapper::toResponse);
+    }
 
     @Override
     public BlogPostResponse createBlog(BlogPostRequest request) {
@@ -75,9 +124,44 @@ public class BlogServiceImpl implements BlogService {
         blogPost.setAuthor(author);
         blogPost.setTitle(request.getTitle());
         blogPost.setContent(request.getContent());
-        blogPost.setStatus(BlogStatus.DRAFT);
+        if (request.getStatus() != null) {
+            blogPost.setStatus(request.getStatus());
+            if (request.getStatus() == BlogStatus.PUBLISHED) {
+                blogPost.setPublishedAt(LocalDateTime.now());
+            }
+        } else {
+            blogPost.setStatus(BlogStatus.DRAFT);
+        }
+
+        // Handle tags
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            java.util.Set<com.Blog.Platform.Blog.Model.Tag> tags = new java.util.HashSet<>();
+            for (String tagName : request.getTags()) {
+                com.Blog.Platform.Blog.Model.Tag tag = tagRepository.findByNameIgnoreCase(tagName)
+                        .orElseGet(() -> {
+                            com.Blog.Platform.Blog.Model.Tag newTag = new com.Blog.Platform.Blog.Model.Tag();
+                            newTag.setName(tagName);
+                            return tagRepository.save(newTag);
+                        });
+                tags.add(tag);
+            }
+            blogPost.setTags(tags);
+        }
+
+        // Handle category
+        if (request.getCategoryId() != null) {
+            com.Blog.Platform.Blog.Model.Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new BlogCreationException("Category not found"));
+            blogPost.setCategory(category);
+        }
 
         BlogPost savedBlog = blogPostRepository.save(blogPost);
+
+        if (savedBlog.getStatus() == BlogStatus.PUBLISHED) {
+            processMentions(savedBlog.getContent(), savedBlog.getId(),
+                    com.Blog.Platform.Community.Model.MentionType.BLOG, savedBlog.getAuthor());
+        }
+
         return blogPostMapper.toResponse(savedBlog);
     }
 
@@ -107,11 +191,16 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    public Page<BlogPostResponse> getDailyThoughts(Pageable pageable) {
-        return blogPostRepository
-                .findByCategory_NameIgnoreCaseAndStatus(
-                        "dailythought", BlogStatus.PUBLISHED, pageable)
-                .map(blogPostMapper::toResponse);
+    public BlogPostResponse getPublishedBlogById(UUID blogId) {
+        BlogPost blog = blogPostRepository
+                .findById(blogId)
+                .orElseThrow(() -> new BlogCreationException("Blog not found"));
+
+        if (blog.getStatus() != BlogStatus.PUBLISHED) {
+            throw new BlogCreationException("Blog is not published");
+        }
+
+        return blogPostMapper.toResponse(blog);
     }
 
     @Override
@@ -135,10 +224,6 @@ public class BlogServiceImpl implements BlogService {
                 .findByIdAndAuthor(blogId, author)
                 .orElseThrow(() -> new BlogCreationException("Blog not found"));
 
-        if (blog.getStatus() != BlogStatus.DRAFT) {
-            throw new BlogCreationException("Only DRAFT blogs can be updated");
-        }
-
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
             blog.setTitle(request.getTitle());
         }
@@ -147,7 +232,30 @@ public class BlogServiceImpl implements BlogService {
             blog.setContent(request.getContent());
         }
 
-        return blogPostMapper.toResponse(blog);
+        // Handle tags update
+        if (request.getTags() != null) {
+            java.util.Set<com.Blog.Platform.Blog.Model.Tag> tags = new java.util.HashSet<>();
+            for (String tagName : request.getTags()) {
+                com.Blog.Platform.Blog.Model.Tag tag = tagRepository.findByNameIgnoreCase(tagName)
+                        .orElseGet(() -> {
+                            com.Blog.Platform.Blog.Model.Tag newTag = new com.Blog.Platform.Blog.Model.Tag();
+                            newTag.setName(tagName);
+                            return tagRepository.save(newTag);
+                        });
+                tags.add(tag);
+            }
+            blog.setTags(tags);
+        }
+
+        // Handle category update
+        if (request.getCategoryId() != null) {
+            com.Blog.Platform.Blog.Model.Category category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new BlogCreationException("Category not found"));
+            blog.setCategory(category);
+        }
+
+        BlogPost saved = blogPostRepository.save(blog);
+        return blogPostMapper.toResponse(saved);
     }
 
     /* ===================== PUBLISH ===================== */
@@ -168,15 +276,26 @@ public class BlogServiceImpl implements BlogService {
         blog.setStatus(BlogStatus.PUBLISHED);
         blog.setPublishedAt(LocalDateTime.now());
 
-        BlogPost saved = blogPostRepository.save(blog);
+        BlogPost saved = blogPostRepository.saveAndFlush(blog);
 
         asyncAiWorker.generateSummary(saved.getId(), saved.getContent());
 
+        processMentions(saved.getContent(), saved.getId(), com.Blog.Platform.Community.Model.MentionType.BLOG,
+                saved.getAuthor());
+
+        // Notify followers
+        java.util.List<User> followers = followService.getFollowersList(saved.getAuthor().getId());
+        for (User follower : followers) {
+            notificationService.createNotification(
+                    follower,
+                    saved.getAuthor(),
+                    com.Blog.Platform.User.Model.NotificationType.NEW_POST,
+                    saved.getId().toString(),
+                    saved.getAuthor().getFirstName() + " posted a new blog: " + saved.getTitle());
+        }
+
         return blogPostMapper.toResponse(saved);
     }
-
-
-
 
     /* ===================== DELETE ===================== */
 
@@ -191,16 +310,14 @@ public class BlogServiceImpl implements BlogService {
         blogPostRepository.delete(blog);
     }
 
-
     public User getCurrentUser() {
-        String email = SecurityUtil.getCurrentUserEmai();
+        String email = SecurityUtil.getCurrentUserEmail();
         return userRepo.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
     public BlogPost getMyBlogEntity(UUID blogId) {
-
         User author = getCurrentUser();
 
         return blogPostRepository
@@ -208,6 +325,38 @@ public class BlogServiceImpl implements BlogService {
                 .orElseThrow(() -> new BlogCreationException("Blog not found"));
     }
 
+    private void processMentions(String content, UUID contentId, com.Blog.Platform.Community.Model.MentionType type,
+            User actor) {
+        if (content == null || content.isEmpty())
+            return;
+
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("@(\\w+)");
+        java.util.regex.Matcher matcher = pattern.matcher(content);
+
+        java.util.Set<String> processedUsernames = new java.util.HashSet<>();
+
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            if (processedUsernames.contains(username))
+                continue;
+            processedUsernames.add(username);
+
+            userRepo.findByUsername(username).ifPresent(mentionedUser -> {
+                if (!mentionedUser.getId().equals(actor.getId())) {
+                    com.Blog.Platform.Community.Model.Mention mention = new com.Blog.Platform.Community.Model.Mention(
+                            mentionedUser, actor, contentId, type);
+                    mentionRepository.save(mention);
+
+                    String message = actor.getUsername() + " mentioned you in a blog";
+                    notificationService.createNotification(
+                            mentionedUser,
+                            actor,
+                            com.Blog.Platform.User.Model.NotificationType.MENTION_BLOG,
+                            contentId.toString(),
+                            message);
+                }
+            });
+        }
+    }
 
 }
-

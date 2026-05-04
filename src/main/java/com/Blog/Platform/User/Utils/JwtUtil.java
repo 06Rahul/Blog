@@ -68,4 +68,14 @@ public class JwtUtil {
 
         return "ACCESS".equals(type);
     }
+
+    public Date extractIssuedAt(String token) {
+        return Jwts.parser()
+                .verifyWith((SecretKey) getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getIssuedAt();
+    }
+
 }

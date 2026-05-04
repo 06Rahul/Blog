@@ -2,62 +2,88 @@ package com.Blog.Platform.User.Controller;
 
 import com.Blog.Platform.User.Service.AuthService;
 import com.Blog.Platform.User.DTO.*;
+import com.Blog.Platform.User.Excepction.UserAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Validator;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/user")
-@RequiredArgsConstructor
-@Tag(name = "Auth", description = "Authentication and token lifecycle endpoints.")
 public class UserController {
     private final AuthService authService;
+    private final com.Blog.Platform.User.Service.UserService userService;
+    private final Validator validator;
+    private final com.Blog.Platform.User.UserMapper.UserMapper userMapper;
+
+    public UserController(AuthService authService, com.Blog.Platform.User.Service.UserService userService,
+            Validator validator, com.Blog.Platform.User.UserMapper.UserMapper userMapper) {
+        this.authService = authService;
+        this.userService = userService;
+        this.validator = validator;
+        this.userMapper = userMapper;
+    }
 
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(
-            summary = "Sign up",
-            description = "Registers a new user. Send the JSON payload in multipart field `data` and optionally an `image` file."
-    )
-    public ResponseEntity<SignUpResponse> register(
-            @Parameter(description = "Sign up JSON (SignUpRequest) serialized as string in multipart field `data`.", required = true)
+    public ResponseEntity<ApiMessageResponse> signup(
             @RequestPart("data") String data,
-            @Parameter(description = "Optional profile image.", required = false)
-            @RequestPart(value = "image", required = false) MultipartFile image
-    ) throws Exception {
+            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
         SignUpRequest request = mapper.readValue(data, SignUpRequest.class);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(authService.register(request, image));
+        Set<ConstraintViolation<SignUpRequest>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            String errorMessage = violations.stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .collect(Collectors.joining(", "));
+            throw new IllegalArgumentException("Validation failed: " + errorMessage);
+        }
+
+        authService.register(request, image);
+
+        return ResponseEntity.ok(
+                new ApiMessageResponse("OTP sent to your email. Please verify."));
     }
 
+    @PostMapping("/verify-otp")
+    public ResponseEntity<SignUpResponse> verifyOtp(
+            @RequestBody VerifyOtpRequest request) {
+        SignUpResponse response = authService.verifyOtp(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiMessageResponse> resendOtp(
+            @Valid @RequestBody ResendOtpRequest request) {
+        authService.resendOtp(request.getEmail());
+        return ResponseEntity.ok(
+                new ApiMessageResponse("New OTP sent to your email. Please verify."));
+    }
 
     @PostMapping("/login")
     @Operation(summary = "Login", description = "Authenticates user credentials and returns access token details. May also set refresh token cookie depending on implementation.")
     public ResponseEntity<SignInResponse> login(
             @Valid @RequestBody SignInRequest request,
-            HttpServletResponse response
-    ) {
+            HttpServletResponse response) {
         return ResponseEntity.ok(authService.login(request, response));
     }
-
 
     @PostMapping("/logout")
     @Operation(summary = "Logout", description = "Logs the current user out and clears auth/refresh tokens if applicable.")
     public ResponseEntity<Void> logout(HttpServletRequest request,
-                                       HttpServletResponse response) {
+            HttpServletResponse response) {
         authService.logout(request, response);
         return ResponseEntity.noContent().build();
     }
@@ -66,11 +92,33 @@ public class UserController {
     @Operation(summary = "Refresh token", description = "Issues a new access token using the refresh token (typically from cookie).")
     public ResponseEntity<TokenRefreshResponse> refreshToken(
             HttpServletRequest request,
-            HttpServletResponse response
-    ) {
+            HttpServletResponse response) {
         return ResponseEntity.ok(authService.refreshToken(request, response));
     }
 
+    @PostMapping("/reset")
+    public ResponseEntity<SignUpResponse> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+        return ResponseEntity.ok(authService.passwordReset(request));
 
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<java.util.List<UserDTO>> searchUsers(@RequestParam String query) {
+        return ResponseEntity.ok(userService.searchUsers(query));
+    }
+
+    @GetMapping("/username/{username:.+}")
+    public ResponseEntity<UserProfileResponse> getUserByUsername(@PathVariable String username) {
+        try {
+            com.Blog.Platform.User.Model.User user = userService.findByUsername(username)
+                    .or(() -> userService.findByEmail(username)) // Fallback to email search
+                    .orElseThrow(() -> new com.Blog.Platform.User.Excepction.UserNotFoundException("User not found"));
+            return ResponseEntity.ok(userMapper.toUserProfileResponse(user));
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(UserController.class).error("Error fetching user {}: {}", username,
+                    e.getMessage(), e);
+            throw e;
+        }
+    }
 
 }

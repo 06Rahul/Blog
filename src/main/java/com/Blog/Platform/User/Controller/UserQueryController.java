@@ -3,69 +3,110 @@ package com.Blog.Platform.User.Controller;
 import com.Blog.Platform.AiService.DTO.AiUsageResponse;
 import com.Blog.Platform.AiService.ServiceImpl.AiUsageService;
 import com.Blog.Platform.User.DTO.CustomUserDetails;
+import com.Blog.Platform.User.DTO.ProfileUpdateRequest;
 import com.Blog.Platform.User.DTO.UserProfileResponse;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Service.UserService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
+
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
-@Tag(name = "Users", description = "User profile and lookup endpoints.")
 public class UserQueryController {
 
-    private final UserService userService;
-    private final AiUsageService aiUsageService;
+        private final UserService userService;
+        private final AiUsageService aiUsageService;
 
-    @GetMapping("/me")
-    @Operation(summary = "Get my profile", description = "Returns the authenticated user's profile along with today's AI usage.")
-    public ResponseEntity<UserProfileResponse> me(Authentication auth) {
+        public UserQueryController(UserService userService, AiUsageService aiUsageService) {
+                this.userService = userService;
+                this.aiUsageService = aiUsageService;
+        }
 
-        CustomUserDetails user =
-                (CustomUserDetails) auth.getPrincipal();
+        @GetMapping("/me")
+        public ResponseEntity<UserProfileResponse> me(Authentication auth) {
+                // Get full user entity to include all profile fields
+                CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
 
-        AiUsageResponse usage =
-                aiUsageService.getTodayUsage();
+                User user = userService.findById(userDetails.getId())
+                                .orElseThrow(() -> new com.Blog.Platform.User.Excepction.UserNotFoundException(
+                                                "User not found"));
 
-        return ResponseEntity.ok(
-                new UserProfileResponse(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getUsername(),
-                        user.getRole(),
-                        usage.getUsed(),
-                        usage.getLimit()
-                )
-        );
-    }
+                AiUsageResponse usage = aiUsageService.getTodayUsage();
 
+                return ResponseEntity.ok(
+                                new UserProfileResponse(
+                                                user.getId(),
+                                                user.getEmail(),
+                                                user.getUsername(),
+                                                user.getFirstName(),
+                                                user.getLastName(),
+                                                user.getBio(),
+                                                user.getWebsite(),
+                                                user.getMobileNumber(),
+                                                user.getProfileImageUrl(),
+                                                user.getRole().name(),
+                                                user.isEmailVerified(),
+                                                user.isMobileVerified(),
+                                                usage.getUsed(),
+                                                usage.getLimit()));
+        }
 
-    @GetMapping("/username/{username}")
-    @Operation(summary = "Get user by username", description = "Fetches a user by their username.")
-    public ResponseEntity<User> getByUsername(@PathVariable String username) {
+        @GetMapping("/username/{username}")
+        public ResponseEntity<com.Blog.Platform.User.DTO.PublicUserProfileResponse> getByUsername(
+                        @PathVariable String username) {
 
-        Optional<User> user = userService.findByUsername(username);
+                Optional<User> userOptional = userService.findByUsername(username);
 
-        return user
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+                if (userOptional.isPresent()) {
+                        User user = userOptional.get();
+                        com.Blog.Platform.User.DTO.PublicUserProfileResponse response = com.Blog.Platform.User.DTO.PublicUserProfileResponse
+                                        .builder()
+                                        .id(user.getId())
+                                        .username(user.getActualUsername())
+                                        .firstName(user.getFirstName())
+                                        .lastName(user.getLastName())
+                                        .bio(user.getBio())
+                                        .profileImageUrl(user.getProfileImageUrl())
+                                        .website(user.getWebsite())
+                                        .role(user.getRole() != null ? user.getRole().name() : "USER")
+                                        .build();
+                        return ResponseEntity.ok(response);
+                }
 
-    @GetMapping("/email/{email}")
-    @Operation(summary = "Get user by email", description = "Fetches a user by their email address.")
-    public ResponseEntity<User> getByEmail(@PathVariable String email) {
+                return ResponseEntity.notFound().build();
+        }
 
-        Optional<User> user = userService.findByEmail(email);
+        @GetMapping("/email/{email}")
+        public ResponseEntity<User> getByEmail(@PathVariable String email) {
 
-        return user
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+                Optional<User> user = userService.findByEmail(email);
+
+                return user
+                                .map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build());
+        }
+
+        /* ===================== PROFILE UPDATE ===================== */
+
+        @PutMapping("/me")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UserProfileResponse> updateProfile(
+                        @Valid @RequestBody ProfileUpdateRequest request) {
+                return ResponseEntity.ok(userService.updateProfile(request));
+        }
+
+        @PutMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UserProfileResponse> updateProfileImage(
+                        @RequestParam("image") MultipartFile image) {
+                return ResponseEntity.ok(userService.updateProfileImage(image));
+        }
 }
