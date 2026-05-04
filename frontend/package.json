@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "React frontend for Blog Platform with AI Writing Assistant",
   "private": true,
-  "type": "module",
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@react-three/drei": "^9.122.0",

@@ -16,8 +16,6 @@ import java.util.UUID;
 @Repository
 public interface SavedBlogRepository extends JpaRepository<SavedBlog, UUID> {
 
-    long countByUser(User user);
-
     @Query("SELECT s FROM SavedBlog s WHERE s.user = :user ORDER BY s.savedAt DESC")
     Page<SavedBlog> findMySavedBlogs(@Param("user") User user, Pageable pageable);
 

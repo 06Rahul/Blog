@@ -4,8 +4,6 @@ import com.Blog.Platform.Blog.Model.Category;
 import com.Blog.Platform.Blog.Repo.CategoryRepository;
 import com.Blog.Platform.Community.DTO.CommunityCreateRequest;
 import com.Blog.Platform.Community.DTO.CommunityMemberDTO;
-import com.Blog.Platform.Discovery.DTO.CommunityLeaderboardEntry;
-import com.Blog.Platform.Discovery.Service.DiscoveryInsightsService;
 import com.Blog.Platform.Community.Model.*;
 import com.Blog.Platform.Community.Repository.CommunityMemberRepository;
 import com.Blog.Platform.Community.Repository.CommunityRepository;
@@ -13,7 +11,6 @@ import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +33,6 @@ public class CommunityService {
 
     @Autowired
     private UserRepo userRepo;
-
-    @Autowired
-    private DiscoveryInsightsService discoveryInsightsService;
 
     @Transactional
     public Community createCommunity(CommunityCreateRequest request, User owner) {
@@ -76,7 +70,7 @@ public class CommunityService {
     public Page<Community> getAllCommunities(String search, UUID categoryId, boolean onlyJoined, User currentUser,
             Pageable pageable) {
         if (onlyJoined && currentUser != null) {
-            return communityRepository.findJoinedCommunities(currentUser.getId(), CommunityMemberStatus.ACCEPTED, pageable);
+            return communityRepository.findJoinedCommunities(currentUser, pageable);
         }
 
         if (search != null && !search.isEmpty() && categoryId != null) {
@@ -87,45 +81,6 @@ public class CommunityService {
             return communityRepository.findByCategory_Id(categoryId, pageable);
         }
         return communityRepository.findAll(pageable);
-    }
-
-    public Page<Community> getJoinedCommunities(User currentUser, Pageable pageable) {
-        return communityRepository.findJoinedCommunities(currentUser.getId(), CommunityMemberStatus.ACCEPTED, pageable);
-    }
-
-    public Page<Community> getOwnedCommunities(User currentUser, Pageable pageable) {
-        return communityRepository.findOwnedCommunities(currentUser.getId(), pageable);
-    }
-
-    public Page<Community> discoverCommunities(String filter, String search, UUID categoryId, User currentUser, Pageable pageable) {
-        String normalizedFilter = filter == null ? "featured" : filter.trim().toLowerCase();
-        if ("joined".equals(normalizedFilter) && currentUser != null) {
-            return communityRepository.findJoinedCommunities(currentUser.getId(), CommunityMemberStatus.ACCEPTED, pageable);
-        }
-        if ("new".equals(normalizedFilter)) {
-            return communityRepository.findNewestCommunities(search, categoryId, pageable);
-        }
-        if ("trending".equals(normalizedFilter)) {
-            java.util.List<CommunityLeaderboardEntry> ranked = discoveryInsightsService.getCommunityLeaderboard("week", false, Math.max(20, pageable.getPageSize() * (pageable.getPageNumber() + 1)));
-            java.util.List<UUID> ids = ranked.stream().map(CommunityLeaderboardEntry::communityId).toList();
-            if (ids.isEmpty()) {
-                return Page.empty(pageable);
-            }
-            java.util.Map<UUID, Community> communityMap = communityRepository.findAllById(ids).stream()
-                    .filter(community -> categoryId == null || (community.getCategory() != null && categoryId.equals(community.getCategory().getId())))
-                    .filter(community -> search == null || search.isBlank()
-                            || community.getName().toLowerCase().contains(search.toLowerCase())
-                            || (community.getDescription() != null && community.getDescription().toLowerCase().contains(search.toLowerCase())))
-                    .collect(java.util.stream.Collectors.toMap(Community::getId, community -> community));
-            java.util.List<Community> ordered = ids.stream()
-                    .map(communityMap::get)
-                    .filter(java.util.Objects::nonNull)
-                    .toList();
-            int fromIndex = Math.min((int) pageable.getOffset(), ordered.size());
-            int toIndex = Math.min(fromIndex + pageable.getPageSize(), ordered.size());
-            return new PageImpl<>(ordered.subList(fromIndex, toIndex), pageable, ordered.size());
-        }
-        return communityRepository.findFeaturedCommunities(search, categoryId, pageable);
     }
 
     public Community getCommunityById(UUID id) {

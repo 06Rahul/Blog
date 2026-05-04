@@ -1,82 +1,204 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { notificationService } from '../../services/notificationService';
+import { webSocketService } from '../../services/messagingService';
 import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationContext';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
 export const NotificationDropdown = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
+    useEffect(() => {
+        if (user) {
+            loadNotifications();
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+
+        let subscriptions = [];
+        const setupWebSocket = async () => {
+            try {
+                if (!webSocketService.isConnected) {
+                    await webSocketService.connect();
+                }
+                if (webSocketService.client?.connected) {
+                    subscriptions = webSocketService.subscribeToNotifications(
+                        handleNewNotification,
+                        (countPayload) => setUnreadCount(Number(countPayload?.unreadCount ?? countPayload ?? 0))
+                    );
+                }
+            } catch (err) {
+                console.error('Failed to subscribe to notifications', err);
+            }
+        };
+
+        setupWebSocket();
+        const interval = setInterval(loadNotifications, 60000);
+
+        return () => {
+            clearInterval(interval);
+            subscriptions.forEach((subscription) => subscription?.unsubscribe?.());
+        };
+    }, [user]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleNewNotification = (notification) => {
+        setNotifications((prev) => [notification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+
+        toast((t) => (
+            <div
+                onClick={() => {
+                    handleNotificationClick(notification);
+                    toast.dismiss(t.id);
+                }}
+                className="cursor-pointer"
+            >
+                <p className="font-semibold text-sm">New Notification</p>
+                <p className="text-xs">{notification.message}</p>
+            </div>
+        ), {
+            duration: 5000,
+            style: {
+                borderRadius: '10px',
+                background: '#333',
+                color: '#fff',
+            },
+        });
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
-  const handleNotificationClick = async (notification) => {
-    if (!notification.read && notification.id) {
-      await markAsRead(notification.id);
-    }
-    setIsOpen(false);
-    navigate(notification.routeUrl || '/notifications');
-  };
+    const loadNotifications = async () => {
+        try {
+            const data = await notificationService.getNotifications();
+            setNotifications(data);
+            setUnreadCount(await notificationService.getUnreadCount());
+        } catch (error) {
+            console.error('Failed to load notifications', error);
+        }
+    };
 
-  if (!user) return null;
+    const handleNotificationClick = async (notification) => {
+        try {
+            if (!notification.read) {
+                await notificationService.markAsRead(notification.id);
+                setUnreadCount((prev) => Math.max(0, prev - 1));
+                setNotifications((prev) =>
+                    prev.map((item) => item.id === notification.id ? { ...item, read: true } : item)
+                );
+            }
 
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button onClick={() => setIsOpen((open) => !open)} className="relative rounded-2xl border border-white/10 bg-white/5 p-3 text-slate-300 hover:bg-white/10 hover:text-white">
-        <Bell className="h-4.5 w-4.5" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+            setIsOpen(false);
+            if (notification.routeUrl) {
+                navigate(notification.routeUrl);
+            }
+        } catch (error) {
+            console.error('Failed to handle notification click', error);
+        }
+    };
 
-      {isOpen && (
-        <div className="absolute right-0 mt-3 w-[22rem] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/95 shadow-2xl backdrop-blur-xl">
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <h3 className="font-semibold text-white">Notifications</h3>
-            {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="text-xs text-cyan-200 hover:text-cyan-100">
-                Mark all read
-              </button>
+    const handleMarkAllRead = async () => {
+        try {
+            await notificationService.markAllAsRead();
+            setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Failed to mark all as read', error);
+        }
+    };
+
+    if (!user) return null;
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-white transition-colors"
+            >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                )}
+            </button>
+
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                        {unreadCount > 0 && (
+                            <button
+                                onClick={handleMarkAllRead}
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                                Mark all read
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                No notifications
+                            </div>
+                        ) : (
+                            notifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => handleNotificationClick(notification)}
+                                    className={`p-4 border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
+                                >
+                                    <div className="flex gap-3">
+                                        <div className="flex-shrink-0">
+                                            {notification.sender?.profileImageUrl ? (
+                                                <img src={notification.sender.profileImageUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+                                                    {notification.sender?.username?.[0]?.toUpperCase() || '?'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                                                <span className="font-semibold">{notification.sender?.displayName || notification.sender?.username}</span>
+                                                {' '}{notification.message}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {format(new Date(notification.createdAt), 'MMM d, h:mm a')}
+                                            </p>
+                                        </div>
+                                        {!notification.read && (
+                                            <div className="flex-shrink-0 self-center">
+                                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
             )}
-          </div>
-
-          <div className="max-h-96 overflow-y-auto p-3">
-            {notifications.length === 0 ? (
-              <div className="rounded-[20px] bg-white/5 p-4 text-center text-sm text-slate-400">No notifications</div>
-            ) : (
-              <div className="space-y-2">
-                {notifications.slice(0, 6).map((notification) => (
-                  <button
-                    key={notification.id || `${notification.createdAt}-${notification.message}`}
-                    onClick={() => handleNotificationClick(notification)}
-                    className={`w-full rounded-[22px] border p-4 text-left transition ${notification.read ? 'border-white/5 bg-white/5' : 'border-cyan-400/20 bg-cyan-400/10'}`}
-                  >
-                    <p className="text-sm font-medium text-white">{notification.title}</p>
-                    <p className="mt-1 text-xs text-slate-400">{notification.message}</p>
-                    <p className="mt-3 text-xs text-slate-500">
-                      {notification.createdAt ? formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }) : 'Recently'}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
-      )}
-    </div>
-  );
+    );
 };

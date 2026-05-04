@@ -27,13 +27,7 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
 
     Page<CommunityMember> findByUser(User user, Pageable pageable);
 
-    Page<CommunityMember> findByUserAndStatusOrderByJoinedAtDesc(User user, com.Blog.Platform.Community.Model.CommunityMemberStatus status, Pageable pageable);
-
     long countByUser(User user);
-    
-    long countByUserAndStatus(User user, com.Blog.Platform.Community.Model.CommunityMemberStatus status);
-    
-    long countByUserAndRole(User user, com.Blog.Platform.Community.Model.CommunityRole role);
 
     long countByCommunity(Community community);
 }

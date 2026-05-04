@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://localhost:3306/user_service?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: blog_app
-    password: strongPass123
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -16,8 +16,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: your-email@gmail.com
-    password: your-app-password
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -28,7 +28,7 @@ spring:
   security:
     user:
       name: user
-      password: 0000
+      password: ${SECURITY_PASSWORD}
 
   # FIXED: Moved these out of 'app' and into 'spring'
   servlet:
@@ -47,12 +47,12 @@ app:
   storage:
     image-dir: ./user-images/
 jwt:
-  secret: veryStrongSecretKeyChangeLater1452369871zcvbnm,asdfghjkl;'][poiuytrewqQWEDFGHJNM<VBJKOPUJKMTRFGBWEDCVBOIKL<POLKAWSEDRFYGUHJ
+  secret: ${JWT_SECRET}
   expiration: 86400000
   refresh-expiration: 604800000
 
 gemini:
   api:
-    key: AIzaSyDQGkNa3CVBu8wWyini60uWkh-72IUQVw0
+    key: ${GEMINI_API_KEY}
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
 

@@ -1,137 +1,106 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Compass, Bookmark, MessageSquare, Users, TrendingUp, Bell, BarChart3, Sparkles, Code2, Trophy, Shield, PlusSquare, X, UserCircle2, Palette } from 'lucide-react';
-import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { Home, Compass, Users, FileEdit, MessageSquare, Terminal, LogOut, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { motion } from 'framer-motion';
 
-const mainNav = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: Compass, label: 'Explore', path: '/search' },
-  { icon: Bookmark, label: 'Dashboard', path: '/dashboard', auth: true },
-  { icon: Bell, label: 'Notifications', path: '/notifications', auth: true },
-  { icon: MessageSquare, label: 'Messages', path: '/messages', auth: true },
-  { icon: UserCircle2, label: 'My Profile', path: '/profile', auth: true },
-  { icon: Users, label: 'Communities', path: '/communities' },
-  { icon: TrendingUp, label: 'Trending', path: '/leaderboards' },
-];
+export const SideBar = () => {
+    const { pathname } = useLocation();
+    const { user, logout } = useAuth();
+    const { isDarkMode, toggleTheme } = useTheme();
 
-const toolNav = [
-  { icon: BarChart3, label: 'Analytics', path: '/analytics/dashboard', auth: true },
-  { icon: Sparkles, label: 'AI Assistant', path: '/ai-assistant', auth: true },
-  { icon: Code2, label: 'Playground', path: '/playground', auth: true },
-  { icon: Trophy, label: 'Leaderboards', path: '/leaderboards' },
-];
+    const menuItems = [
+        { icon: Home, label: 'Home', path: '/' },
+        { icon: Compass, label: 'Explore', path: '/search' },
+        { icon: Users, label: 'Communities', path: '/communities' },
+        { icon: FileEdit, label: 'Drafts', path: '/dashboard' },
+        { icon: MessageSquare, label: 'Messages', path: '/messages' },
+    ];
 
-const adminNav = [{ icon: Shield, label: 'Admin Dashboard', path: '/admin/dashboard', auth: true }];
+    const isActive = (path) => {
+        if (path === '/' && pathname === '/') return true;
+        if (path !== '/' && pathname.startsWith(path)) return true;
+        return false;
+    };
 
-export const SideBar = ({ mobileNavOpen, setMobileNavOpen }) => {
-  const { pathname } = useLocation();
-  const { isAuthenticated, user } = useAuth();
-  const { theme, themes, setTheme } = useTheme();
-  const [showCustomizer, setShowCustomizer] = useState(false);
-
-  const renderLink = (item) => {
-    if (item.auth && !isAuthenticated) return null;
-    const active = item.path === '/' ? pathname === '/' : pathname.startsWith(item.path);
     return (
-      <Link
-        key={item.label}
-        to={item.path}
-        onClick={() => setMobileNavOpen(false)}
-        className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${active ? 'bg-[var(--primary)] text-[var(--primary-contrast)] shadow-[0_20px_60px_-30px_rgba(15,23,42,0.22)]' : 'text-[var(--text)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]'}`}
-      >
-        <item.icon className="h-4.5 w-4.5" />
-        <span>{item.label}</span>
-      </Link>
-    );
-  };
-
-  return (
-    <>
-      <div className={`fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm transition lg:hidden ${mobileNavOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`} onClick={() => setMobileNavOpen(false)} />
-      <aside className={`shell-chrome fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-hidden border-r p-5 backdrop-blur-xl transition-transform duration-200 lg:w-80 ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3" onClick={() => setMobileNavOpen(false)}>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 via-sky-400 to-amber-300 text-lg font-semibold text-slate-950">U</div>
-            <div>
-              <div className="text-sm uppercase tracking-[0.28em] text-[var(--text-muted)]">UserService</div>
-              <div className="text-lg font-semibold text-[var(--text)]">Creator Control</div>
-            </div>
-          </Link>
-          <button className="rounded-xl p-2 text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)] lg:hidden" onClick={() => setMobileNavOpen(false)}>
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="shell-soft mt-5 rounded-[22px] border p-3">
-          <p className="text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">Overview</p>
-          <h2 className="mt-2 text-sm font-semibold leading-5 text-[var(--text)]">Publishing, analytics, moderation, and messaging in one place.</h2>
-          {isAuthenticated ? (
-            <Link to="/blogs/new" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary)] px-3 py-1.5 text-[11px] font-semibold text-[var(--primary-contrast)] transition hover:opacity-90">
-              <PlusSquare className="h-3 w-3" />
-              Create post
-            </Link>
-          ) : (
-            <Link to="/signup" className="mt-3 inline-flex items-center rounded-lg bg-[var(--primary)] px-3 py-1.5 text-[11px] font-semibold text-[var(--primary-contrast)] transition hover:opacity-90">
-              Join now
-            </Link>
-          )}
-        </div>
-
-        <nav className="mt-6 min-h-0 flex-1 space-y-6 overflow-y-auto pr-1 pb-6">
-          <div className="space-y-2">
-            <p className="px-3 text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">Main</p>
-            {mainNav.map(renderLink)}
-          </div>
-          <div className="space-y-2">
-            <p className="px-3 text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">Tools</p>
-            {toolNav.slice(0, 2).map(renderLink)}
-            <div className="space-y-2">
-              <button
-                onClick={() => setShowCustomizer((current) => !current)}
-                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm text-[var(--text)] transition hover:bg-[var(--surface-soft)]"
-              >
-                <Palette className="h-4.5 w-4.5 text-[var(--primary)]" />
-                <span>Customize</span>
-              </button>
-              {showCustomizer && (
-                <div className="grid gap-2 px-2 pb-2">
-                  {themes.map((option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => setTheme(option.id)}
-                      className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${theme === option.id ? 'border-[var(--primary)] bg-[var(--surface-muted)]' : 'border-[var(--outline)] bg-[var(--surface-soft)] hover:opacity-90'}`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium text-[var(--text)]">{option.name}</span>
-                        <span className="flex items-center gap-1.5">
-                          <span className="h-2.5 w-2.5 rounded-full border border-black/5" style={{ backgroundColor: option.palette['--primary'] }} />
-                          <span className="h-2.5 w-2.5 rounded-full border border-black/5" style={{ backgroundColor: option.palette['--accent'] }} />
-                          <span className="h-2.5 w-2.5 rounded-full border border-black/5" style={{ backgroundColor: option.palette['--secondary'] }} />
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+        <aside className="w-64 h-screen bg-[#0F172A] text-white flex flex-col fixed left-0 top-0 z-50 border-r border-gray-800">
+            {/* Logo Area */}
+            <div className="p-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="font-bold text-xl">B</span>
                 </div>
-              )}
+                <span className="font-bold text-xl tracking-tight">BlogPlatform</span>
             </div>
-            {toolNav.slice(2).map(renderLink)}
-          </div>
-          {isAuthenticated && (
-            <div className="space-y-2">
-              <p className="px-3 text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">Admin</p>
-              {adminNav.map(renderLink)}
-            </div>
-          )}
-        </nav>
 
-        {isAuthenticated && (
-          <div className="shell-soft mt-4 rounded-[24px] border p-4">
-            <p className="text-sm font-medium text-[var(--text)]">{user?.firstName || user?.username}</p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">@{user?.username}</p>
-          </div>
-        )}
-      </aside>
-    </>
-  );
+            {/* Navigation */}
+            <nav className="flex-1 px-4 space-y-2 mt-4">
+                {menuItems.map((item) => (
+                    <Link
+                        key={item.label}
+                        to={item.path}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive(item.path)
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
+                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                            }`}
+                    >
+                        <item.icon className={`w-5 h-5 ${isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'}`} />
+                        <span className="font-medium text-sm">{item.label}</span>
+                    </Link>
+                ))}
+
+                {/* Divider */}
+                <div className="my-6 border-t border-gray-800 mx-4"></div>
+
+                {/* Secondary Items */}
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl text-gray-500 cursor-not-allowed">
+                    <div className="flex items-center gap-3">
+                        <Terminal className="w-5 h-5 opacity-50" />
+                        <span className="font-medium text-sm">Code Playground</span>
+                    </div>
+                    <span className="text-[10px] uppercase font-bold bg-gray-800 px-2 py-0.5 rounded text-gray-400">Soon</span>
+                </div>
+
+                {user && (
+                    <Link
+                        to="/dashboard"
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/dashboard') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                            }`}
+                    >
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span className="font-medium text-sm">Dashboard</span>
+                    </Link>
+                )}
+            </nav>
+
+            {/* Bottom Actions */}
+            <div className="p-4 bg-[#0F172A] border-t border-gray-800">
+                {/* Theme Toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="w-full mb-3 flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition-all"
+                >
+                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    <span className="font-medium text-sm">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+
+                {user ? (
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium text-sm">Logout</span>
+                    </button>
+                ) : (
+                    <Link
+                        to="/login"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
+                    >
+                        <span className="font-bold text-sm">Login</span>
+                    </Link>
+                )}
+            </div>
+        </aside>
+    );
 };

@@ -1,8 +1,5 @@
 package com.Blog.Platform.User.Controller;
 
-import com.Blog.Platform.User.DTO.NotificationGroupResponse;
-import com.Blog.Platform.User.DTO.NotificationPreferenceResponse;
-import com.Blog.Platform.User.DTO.NotificationPreferenceUpdateRequest;
 import com.Blog.Platform.User.DTO.NotificationResponse;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Service.NotificationService;
@@ -33,28 +30,10 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getUserNotifications(user));
     }
 
-    @GetMapping("/grouped")
-    public ResponseEntity<List<NotificationGroupResponse>> getGroupedNotifications() {
-        User user = userService.getCurrentUser();
-        return ResponseEntity.ok(notificationService.getGroupedNotifications(user));
-    }
-
     @GetMapping("/unread-count")
     public ResponseEntity<java.util.Map<String, Long>> getUnreadCount() {
         User user = userService.getCurrentUser();
         return ResponseEntity.ok(java.util.Map.of("unreadCount", notificationService.getUnreadCount(user)));
-    }
-
-    @GetMapping("/preferences")
-    public ResponseEntity<NotificationPreferenceResponse> getPreferences() {
-        User user = userService.getCurrentUser();
-        return ResponseEntity.ok(notificationService.getPreferences(user));
-    }
-
-    @PutMapping("/preferences")
-    public ResponseEntity<NotificationPreferenceResponse> updatePreferences(@RequestBody NotificationPreferenceUpdateRequest request) {
-        User user = userService.getCurrentUser();
-        return ResponseEntity.ok(notificationService.updatePreferences(user, request));
     }
 
     @PutMapping("/{id}/read")

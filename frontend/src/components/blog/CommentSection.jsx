@@ -192,7 +192,7 @@ const CommentItem = ({ comment, blogId, onReplySuccess, depth = 0 }) => {
     }, [comment.id, user]);
 
     const renderMentions = (text) => {
-        const mentionRegex = /@([A-Za-z0-9._-]+)/g;
+        const mentionRegex = /@(\w+)/g;
         const parts = [];
         let lastIndex = 0;
         let match;
@@ -205,7 +205,7 @@ const CommentItem = ({ comment, blogId, onReplySuccess, depth = 0 }) => {
             parts.push(
                 <Link
                     key={`${comment.id}-${match.index}`}
-                    to={`/profile/${encodeURIComponent(match[1])}`}
+                    to={`/profile/${match[1]}`}
                     className="text-primary-600 font-medium hover:underline"
                 >
                     @{match[1]}

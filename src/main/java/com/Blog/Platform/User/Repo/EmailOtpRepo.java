@@ -10,6 +10,4 @@ import java.util.UUID;
 public interface EmailOtpRepo extends JpaRepository<EmailOtp, String> {
 
     Optional<EmailOtp> findTopByEmailOrderByExpiresAtDesc(String email);
-    Optional<EmailOtp> findTopByEmailIgnoreCaseOrderByExpiresAtDesc(String email);
-    void deleteByEmail(String email);
 }

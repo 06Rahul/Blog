@@ -11,8 +11,6 @@ import java.util.UUID;
 public interface PendingUserRepo extends JpaRepository<PendingUser, UUID> {
 
     Optional<PendingUser> findByEmail(String email);
-    Optional<PendingUser> findByEmailIgnoreCase(String email);
-    Optional<PendingUser> findByUsernameIgnoreCase(String username);
 
     List<PendingUser> findByExpiresAtBefore(LocalDateTime dateTime);
 

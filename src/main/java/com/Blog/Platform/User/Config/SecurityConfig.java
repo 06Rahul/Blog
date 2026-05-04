@@ -45,16 +45,8 @@ public class SecurityConfig {
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/user/signup",
-                                "/api/user/login",
-                                "/api/user/signup/verify-otp",
-                                "/api/user/signup/resend-otp",
-                                "/api/user/password-reset/request-otp",
-                                "/api/user/password-reset/verify-otp",
-                                "/api/user/password-reset/confirm"
-                        ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/blogs/published", "/api/blogs/published/**", "/api/tags/**", "/api/meta/**", "/api/blogs/*/recommendations", "/api/users/username/**", "/api/users/email/**", "/api/users/search", "/api/users/username-availability").permitAll()
+                        .requestMatchers("/api/user/signup", "/api/user/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/blogs/published", "/api/blogs/published/**", "/api/tags/**", "/api/blogs/*/recommendations", "/api/users/username/**", "/api/users/email/**", "/api/users/search").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/blogs/*/view").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/compiler/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/compiler/**").permitAll()

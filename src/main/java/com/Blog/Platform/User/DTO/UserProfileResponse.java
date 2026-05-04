@@ -30,9 +30,4 @@ public class UserProfileResponse {
     private int aiDailyLimit;
     private long followerCount;
     private long followingCount;
-    private long postCount;
-    private long draftCount;
-    private long savedCount;
-    private long joinedCount;
-    private long createdCount;
 }

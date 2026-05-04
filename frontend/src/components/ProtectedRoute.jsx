@@ -6,8 +6,8 @@ export const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="rounded-full border-2 border-cyan-300/20 border-t-cyan-300 p-5 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }

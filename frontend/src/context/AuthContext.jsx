@@ -50,7 +50,21 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (userData, imageFile) => {
     try {
-      return await authService.signup(userData, imageFile);
+      const response = await authService.signup(userData, imageFile);
+      // Auto-login after signup using the email and password
+      if (response) {
+        try {
+          await login({
+            email: userData.email,
+            password: userData.password,
+          });
+        } catch (loginError) {
+          // If auto-login fails, just return the signup response
+          // User can manually login
+          console.warn('Auto-login after signup failed:', loginError);
+        }
+      }
+      return response;
     } catch (error) {
       throw error;
     }

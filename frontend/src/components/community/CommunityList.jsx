@@ -4,19 +4,13 @@ import { communityService } from '../../services/communityService';
 import { CommunityCard } from './CommunityCard';
 import { Loader } from 'lucide-react';
 
-export const CommunityList = ({ search = '', category = '', joined = false, filter = 'featured' }) => {
+export const CommunityList = ({ search = '', category = '', joined = false }) => {
     const [page, setPage] = useState(0);
     const size = 10;
 
-    useEffect(() => {
-        setPage(0);
-    }, [search, category, joined, filter]);
-
     const { data, isLoading, isError, error } = useQuery({
-        queryKey: ['communities', page, search, category, joined, filter],
-        queryFn: () => joined
-            ? communityService.getAllCommunities(page, size, search, category, joined)
-            : communityService.discoverCommunities(page, size, filter, search, category)
+        queryKey: ['communities', page, search, category, joined],
+        queryFn: () => communityService.getAllCommunities(page, size, search, category, joined)
     });
 
     if (isLoading) {

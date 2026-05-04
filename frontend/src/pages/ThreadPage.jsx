@@ -7,8 +7,6 @@ import { Loader, MessageSquare, CornerDownRight, ThumbsUp, Trash2 } from 'lucide
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
-const mentionPattern = /(@[A-Za-z0-9._-]+)/g;
-
 const ReplyItem = ({ reply, threadId, onReply, depth = 0 }) => {
     const { user } = useAuth();
     const [isReplying, setIsReplying] = useState(false);
@@ -36,10 +34,10 @@ const ReplyItem = ({ reply, threadId, onReply, depth = 0 }) => {
                         </div>
                         <p className="text-gray-700 dark:text-gray-300 text-sm mt-1 whitespace-pre-wrap">
                             {/* Simple mention highlighting with Link */}
-                            {reply.content.split(mentionPattern).map((part, i) =>
+                            {reply.content.split(/(@\w+)/g).map((part, i) =>
                                 part.startsWith('@') ?
                                     (
-                                        <Link key={i} to={`/profile/${encodeURIComponent(part.substring(1))}`} className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+                                        <Link key={i} to={`/profile/${part.substring(1)}`} className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
                                             {part}
                                         </Link>
                                     ) : (

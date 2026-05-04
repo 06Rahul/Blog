@@ -157,18 +157,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
-        return new ResponseEntity<>(
-                new ErrorResponse(
-                        HttpStatus.CONFLICT.value(),
-                        "Data integrity violation. This could be due to duplicate entries like an already registered mobile number.",
-                        LocalDateTime.now()
-                ),
-                HttpStatus.CONFLICT
-        );
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);

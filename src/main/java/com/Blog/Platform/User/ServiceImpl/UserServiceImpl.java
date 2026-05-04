@@ -2,7 +2,6 @@ package com.Blog.Platform.User.ServiceImpl;
 
 import com.Blog.Platform.AiService.DTO.AiUsageResponse;
 import com.Blog.Platform.AiService.ServiceImpl.AiUsageService;
-import com.Blog.Platform.Blog.Model.BlogStatus;
 import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.User.DTO.ProfileUpdateRequest;
 import com.Blog.Platform.User.DTO.PublicUserProfileResponse;
@@ -29,12 +28,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
     private final FollowRepository followRepository;
-    private final com.Blog.Platform.Blog.Repo.BlogPostRepository blogPostRepository;
-    private final com.Blog.Platform.Community.Repository.CommunityMemberRepository communityMemberRepository;
-    private final com.Blog.Platform.Community.Repository.CommunityRepository communityRepository;
     private final FileStorageServiceImpl fileStorageService;
     private final AiUsageService aiUsageService;
-    private final com.Blog.Platform.User.Repo.SavedBlogRepository savedBlogRepository;
 
     @Override
     public Optional<User> findByUsername(String username) {
@@ -66,16 +61,16 @@ public class UserServiceImpl implements UserService {
         User user = getCurrentUser();
 
         // Check if email is being changed and if it's already taken
-        if (request.getEmail() != null && !request.getEmail().equalsIgnoreCase(user.getEmail())) {
-            if (userRepo.existsByEmailIgnoreCase(request.getEmail())) {
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (existsByEmail(request.getEmail())) {
                 throw new UserAlreadyExistsException("Email already registered");
             }
             user.setEmail(request.getEmail());
         }
 
         // Check if username is being changed and if it's already taken
-        if (request.getUsername() != null && !request.getUsername().equalsIgnoreCase(user.getActualUsername())) {
-            if (userRepo.existsByUsernameIgnoreCase(request.getUsername())) {
+        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
+            if (existsByUsername(request.getUsername())) {
                 throw new UserAlreadyExistsException("Username already taken");
             }
             user.setUsername(request.getUsername());
@@ -95,24 +90,16 @@ public class UserServiceImpl implements UserService {
             user.setWebsite(request.getWebsite());
         }
         if (request.getMobileNumber() != null) {
-            String mobile = request.getMobileNumber().trim();
-            if (mobile.isEmpty()) {
-                user.setMobileNumber(null);
-            } else if (!mobile.equals(user.getMobileNumber())) {
-                if (userRepo.existsByMobileNumber(mobile)) {
-                    throw new UserAlreadyExistsException("Mobile number already taken");
-                }
-                user.setMobileNumber(mobile);
-            }
+            user.setMobileNumber(request.getMobileNumber());
         }
         if (request.getBannerImageUrl() != null) {
             user.setBannerImageUrl(request.getBannerImageUrl());
         }
         if (request.getContactInfo() != null) {
-            user.setContactInfo(request.getContactInfo().trim().isEmpty() ? null : request.getContactInfo());
+            user.setContactInfo(request.getContactInfo());
         }
         if (request.getInterests() != null) {
-            user.setInterests(request.getInterests().trim().isEmpty() ? null : request.getInterests());
+            user.setInterests(request.getInterests());
         }
 
         User savedUser = userRepo.save(user);
@@ -142,30 +129,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getCurrentUser() {
-        try {
-            UUID userId = SecurityUtil.getCurrentUserId();
-            Optional<User> userById = userRepo.findById(userId);
-            if (userById.isPresent()) {
-                return userById.get();
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            String emailOrUsername = SecurityUtil.getCurrentUserEmail();
-            Optional<User> userByEmail = userRepo.findByEmailIgnoreCase(emailOrUsername);
-            if (userByEmail.isPresent()) {
-                return userByEmail.get();
-            }
-
-            Optional<User> userByUsername = userRepo.findByUsernameIgnoreCase(emailOrUsername);
-            if (userByUsername.isPresent()) {
-                return userByUsername.get();
-            }
-        } catch (Exception ignored) {
-        }
-
-        throw new UserNotFoundException("User not found");
+        String email = SecurityUtil.getCurrentUserEmail();
+        return userRepo.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
     @Override
@@ -195,19 +161,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserProfileResponse toProfileResponse(User user) {
-        AiUsageResponse usage = aiUsageService.getTodayUsage(user);
+        AiUsageResponse usage = aiUsageService.getTodayUsage();
         long followerCount = followRepository.countByFollowing(user);
         long followingCount = followRepository.countByFollower(user);
-        long postCount = blogPostRepository.countByAuthorAndStatus(user, BlogStatus.PUBLISHED);
-        long draftCount = blogPostRepository.countByAuthorAndStatus(user, BlogStatus.DRAFT);
-        long savedCount = savedBlogRepository.countByUser(user);
-        long joinedCount = communityMemberRepository.countByUserAndStatus(user, com.Blog.Platform.Community.Model.CommunityMemberStatus.ACCEPTED);
-        long createdCount = communityRepository.countByOwner_Id(user.getId());
 
         return new UserProfileResponse(
                 user.getId(),
                 user.getEmail(),
-                user.getActualUsername(),
+                user.getUsername(),
                 user.getFirstName(),
                 user.getLastName(),
                 user.getBio(),
@@ -223,12 +184,7 @@ public class UserServiceImpl implements UserService {
                 usage.getUsed(),
                 usage.getLimit(),
                 followerCount,
-                followingCount,
-                postCount,
-                draftCount,
-                savedCount,
-                joinedCount,
-                createdCount
+                followingCount
         );
     }
 }

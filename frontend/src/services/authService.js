@@ -20,38 +20,6 @@ export const authService = {
     return response.data;
   },
 
-  verifySignupOtp: async (payload) => {
-    const response = await api.post('/user/signup/verify-otp', payload);
-    return response.data;
-  },
-
-  resendSignupOtp: async (payload) => {
-    const response = await api.post('/user/signup/resend-otp', payload);
-    return response.data;
-  },
-
-  checkUsernameAvailability: async (username) => {
-    const response = await api.get('/users/username-availability', {
-      params: { username },
-    });
-    return response.data;
-  },
-
-  requestPasswordResetOtp: async (payload) => {
-    const response = await api.post('/user/password-reset/request-otp', payload);
-    return response.data;
-  },
-
-  verifyPasswordResetOtp: async (payload) => {
-    const response = await api.post('/user/password-reset/verify-otp', payload);
-    return response.data;
-  },
-
-  resetPasswordWithOtp: async (payload) => {
-    const response = await api.post('/user/password-reset/confirm', payload);
-    return response.data;
-  },
-
   // Login
   login: async (credentials) => {
     const response = await api.post('/user/login', credentials);

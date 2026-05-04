@@ -16,7 +16,6 @@ import com.Blog.Platform.Blog.Util.SecurityUtil;
 import com.Blog.Platform.Community.Model.Community;
 import com.Blog.Platform.Community.Repository.CommunityMemberRepository;
 import com.Blog.Platform.Community.Repository.CommunityRepository;
-import com.Blog.Platform.Discovery.Service.DiscoveryInsightsService;
 import com.Blog.Platform.User.Excepction.UserNotFoundException;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Repo.UserRepo;
@@ -51,7 +50,6 @@ public class BlogServiceImpl implements BlogService {
     private final org.springframework.context.ApplicationEventPublisher applicationEventPublisher;
     private final com.Blog.Platform.Blog.Service.PostAuthorizationService postAuthorizationService;
     private final com.Blog.Platform.User.Service.BlockService blockService;
-    private final DiscoveryInsightsService discoveryInsightsService;
 
     @Override
     public Page<BlogPostResponse> searchByTitle(String title, Pageable pageable) {
@@ -146,7 +144,7 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public Page<BlogPostResponse> getTrendingFeed(Pageable pageable) {
-        return discoveryInsightsService.getTrendingPostPage("week", null, pageable, tryGetCurrentUser());
+        return filterPage(blogPostRepository.findTrendingFeed(pageable), tryGetCurrentUser(), pageable);
     }
 
     @Override

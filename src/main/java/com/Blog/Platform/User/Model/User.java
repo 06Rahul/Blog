@@ -19,14 +19,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(
-        name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "email"),
-                @UniqueConstraint(columnNames = "username"),
-                @UniqueConstraint(columnNames = "mobileNumber")
-        }
-)
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email"),
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "mobileNumber")
+})
 public class User implements UserDetails {
 
     @Id
@@ -40,7 +37,6 @@ public class User implements UserDetails {
     @JsonIgnore
     @Column(nullable = false, length = 100)
     private String password;
-
 
     @Size(min = 3, max = 50)
     @Column(nullable = false, length = 50)
@@ -68,10 +64,7 @@ public class User implements UserDetails {
     private String interests;
 
     /* ===================== CONTACT ===================== */
-    @Pattern(
-            regexp = "^([6-9]\\d{9})?$",
-            message = "Invalid Indian mobile number"
-    )
+    @Pattern(regexp = "^([6-9]\\d{9})?$", message = "Invalid Indian mobile number")
     @Column(length = 10)
     private String mobileNumber;
 
@@ -91,30 +84,6 @@ public class User implements UserDetails {
 
     private LocalDateTime lastLoginAt;
 
-    @Column(name = "digest_enabled")
-    private boolean digestEnabled = false;
-
-    @Column(name = "digest_last_sent")
-    private LocalDateTime digestLastSent;
-
-    @Column(name = "notif_likes_enabled")
-    private boolean notificationLikesEnabled = true;
-
-    @Column(name = "notif_comments_enabled")
-    private boolean notificationCommentsEnabled = true;
-
-    @Column(name = "notif_follows_enabled")
-    private boolean notificationFollowsEnabled = true;
-
-    @Column(name = "notif_mentions_enabled")
-    private boolean notificationMentionsEnabled = true;
-
-    @Column(name = "notif_messages_enabled")
-    private boolean notificationMessagesEnabled = true;
-
-    @Column(name = "notif_community_enabled")
-    private boolean notificationCommunityEnabled = true;
-
     /** JPA requires this */
     public User() {
     }
@@ -129,224 +98,6 @@ public class User implements UserDetails {
     @JsonIgnore
     public String getUsername() {
         return this.email;
-    }
-
-    public String getActualUsername() {
-        return this.username;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    @Override
-    @JsonIgnore
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getProfileImageUrl() {
-        return profileImageUrl;
-    }
-
-    public void setProfileImageUrl(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
-    }
-
-    public String getBannerImageUrl() {
-        return bannerImageUrl;
-    }
-
-    public void setBannerImageUrl(String bannerImageUrl) {
-        this.bannerImageUrl = bannerImageUrl;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-
-    public String getContactInfo() {
-        return contactInfo;
-    }
-
-    public void setContactInfo(String contactInfo) {
-        this.contactInfo = contactInfo;
-    }
-
-    public String getInterests() {
-        return interests;
-    }
-
-    public void setInterests(String interests) {
-        this.interests = interests;
-    }
-
-    public String getMobileNumber() {
-        return mobileNumber;
-    }
-
-    public void setMobileNumber(String mobileNumber) {
-        this.mobileNumber = mobileNumber;
-    }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
-
-    public boolean isMobileVerified() {
-        return mobileVerified;
-    }
-
-    public void setMobileVerified(boolean mobileVerified) {
-        this.mobileVerified = mobileVerified;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getLastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public void setLastLoginAt(LocalDateTime lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
-    }
-
-    public boolean isDigestEnabled() {
-        return digestEnabled;
-    }
-
-    public void setDigestEnabled(boolean digestEnabled) {
-        this.digestEnabled = digestEnabled;
-    }
-
-    public LocalDateTime getDigestLastSent() {
-        return digestLastSent;
-    }
-
-    public void setDigestLastSent(LocalDateTime digestLastSent) {
-        this.digestLastSent = digestLastSent;
-    }
-
-    public boolean isNotificationLikesEnabled() {
-        return notificationLikesEnabled;
-    }
-
-    public void setNotificationLikesEnabled(boolean notificationLikesEnabled) {
-        this.notificationLikesEnabled = notificationLikesEnabled;
-    }
-
-    public boolean isNotificationCommentsEnabled() {
-        return notificationCommentsEnabled;
-    }
-
-    public void setNotificationCommentsEnabled(boolean notificationCommentsEnabled) {
-        this.notificationCommentsEnabled = notificationCommentsEnabled;
-    }
-
-    public boolean isNotificationFollowsEnabled() {
-        return notificationFollowsEnabled;
-    }
-
-    public void setNotificationFollowsEnabled(boolean notificationFollowsEnabled) {
-        this.notificationFollowsEnabled = notificationFollowsEnabled;
-    }
-
-    public boolean isNotificationMentionsEnabled() {
-        return notificationMentionsEnabled;
-    }
-
-    public void setNotificationMentionsEnabled(boolean notificationMentionsEnabled) {
-        this.notificationMentionsEnabled = notificationMentionsEnabled;
-    }
-
-    public boolean isNotificationMessagesEnabled() {
-        return notificationMessagesEnabled;
-    }
-
-    public void setNotificationMessagesEnabled(boolean notificationMessagesEnabled) {
-        this.notificationMessagesEnabled = notificationMessagesEnabled;
-    }
-
-    public boolean isNotificationCommunityEnabled() {
-        return notificationCommunityEnabled;
-    }
-
-    public void setNotificationCommunityEnabled(boolean notificationCommunityEnabled) {
-        this.notificationCommunityEnabled = notificationCommunityEnabled;
     }
 
     @Override

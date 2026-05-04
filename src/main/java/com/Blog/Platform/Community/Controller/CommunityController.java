@@ -68,40 +68,6 @@ public class CommunityController {
         return ResponseEntity.ok(dtos);
     }
 
-    @GetMapping("/discover")
-    public ResponseEntity<Page<CommunityDTO>> discoverCommunities(
-            @RequestParam(defaultValue = "featured") String filter,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) UUID category,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        User user = null;
-        if (userDetails != null) {
-            user = userRepo.findByEmail(userDetails.getUsername()).orElse(null);
-        }
-        final User currentUser = user;
-        Page<Community> communities = communityService.discoverCommunities(filter, search, category, currentUser, pageable);
-        return ResponseEntity.ok(communities.map(c -> convertToDTO(c, currentUser)));
-    }
-
-    @GetMapping("/mine/joined")
-    public ResponseEntity<Page<CommunityDTO>> getMyJoinedCommunities(
-            @PageableDefault(sort = "joinedAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepo.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return ResponseEntity.ok(communityService.getJoinedCommunities(user, pageable).map(c -> convertToDTO(c, user)));
-    }
-
-    @GetMapping("/mine/owned")
-    public ResponseEntity<Page<CommunityDTO>> getMyOwnedCommunities(
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepo.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return ResponseEntity.ok(communityService.getOwnedCommunities(user, pageable).map(c -> convertToDTO(c, user)));
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<CommunityDTO> getCommunity(@PathVariable UUID id,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -242,7 +208,7 @@ public class CommunityController {
         }
 
         dto.setOwnerId(community.getOwner().getId());
-        dto.setOwnerName(community.getOwner().getActualUsername());
+        dto.setOwnerName(community.getOwner().getUsername());
 
         dto.setMemberCount(memberRepository.countByCommunity(community));
 

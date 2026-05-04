@@ -9,7 +9,6 @@ import com.Blog.Platform.User.Service.FollowService;
 import com.Blog.Platform.User.Service.UserService;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -156,25 +155,15 @@ public class FollowServiceImpl implements FollowService {
     @Transactional(readOnly = true)
     public java.util.List<PublicUserProfileResponse> getSuggestions(int limit) {
         User currentUser = userService.getCurrentUser();
-
-        int safeLimit = Math.max(1, Math.min(limit, 25));
-
-        try {
-            return userRepo.findSuggestedUsers(currentUser.getId(), PageRequest.of(0, safeLimit)).stream()
-                    .map(this::toPublicProfile)
-                    .collect(java.util.stream.Collectors.toList());
-        } catch (Exception ignored) {
-            java.util.Set<UUID> excludedIds = followRepository.findByFollower(currentUser).stream()
-                    .map(Follow::getFollowing)
-                    .map(User::getId)
-                    .collect(java.util.stream.Collectors.toSet());
-            excludedIds.add(currentUser.getId());
-
-            return userRepo.findAll(PageRequest.of(0, Math.max(safeLimit * 4, 20))).stream()
-                    .filter(user -> !excludedIds.contains(user.getId()))
-                    .limit(safeLimit)
-                    .map(this::toPublicProfile)
-                    .collect(java.util.stream.Collectors.toList());
-        }
+        
+        java.util.List<User> followedUsers = followRepository.findByFollower(currentUser).stream().map(Follow::getFollowing).toList();
+        java.util.Set<UUID> followedIds = followedUsers.stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
+        followedIds.add(currentUser.getId());
+        
+        return userRepo.findAll().stream()
+                .filter(u -> !followedIds.contains(u.getId()))
+                .limit(limit)
+                .map(this::toPublicProfile)
+                .collect(java.util.stream.Collectors.toList());
     }
 }

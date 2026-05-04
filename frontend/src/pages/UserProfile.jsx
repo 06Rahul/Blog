@@ -9,11 +9,9 @@ import { getImageUrl } from '../utils/imageUrl';
 import { userService } from '../services/userService';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
 
 export const UserProfile = () => {
     const { username } = useParams();
-    const { user: currentUser } = useAuth();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [counts, setCounts] = useState({ followers: 0, following: 0 });
@@ -77,11 +75,6 @@ export const UserProfile = () => {
             followers: isFollowing ? prev.followers + 1 : prev.followers - 1
         }));
     };
-
-    const isOwnProfile = currentUser && user && (
-        String(currentUser.id) === String(user.id) ||
-        currentUser.username?.toLowerCase() === user.username?.toLowerCase()
-    );
 
     if (loading) {
         return (
@@ -178,15 +171,13 @@ export const UserProfile = () => {
                                         </h1>
                                         <p className="text-gray-500 dark:text-gray-400 text-lg">@{user.username}</p>
                                     </div>
-                                    {!isOwnProfile && (
-                                        <div className="flex gap-3">
-                                            <MessageButton userId={user.id} />
-                                            <FollowButton
-                                                targetUserId={user.id}
-                                                onFollowChange={handleFollowChange}
-                                            />
-                                        </div>
-                                    )}
+                                    <div className="flex gap-3">
+                                        <MessageButton userId={user.id} />
+                                        <FollowButton
+                                            targetUserId={user.id}
+                                            onFollowChange={handleFollowChange}
+                                        />
+                                    </div>
                                 </div>
 
                                 {user.bio && (

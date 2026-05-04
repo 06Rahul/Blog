@@ -19,9 +19,6 @@ public class PendingUser {
     private String password; // already encoded
     private String firstName;
     private String lastName;
-    private String bio;
-    private String website;
-    private String mobileNumber;
 
     private String otpHash;
     private LocalDateTime expiresAt;
@@ -79,30 +76,6 @@ public class PendingUser {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-
-    public String getMobileNumber() {
-        return mobileNumber;
-    }
-
-    public void setMobileNumber(String mobileNumber) {
-        this.mobileNumber = mobileNumber;
     }
 
     public String getOtpHash() {

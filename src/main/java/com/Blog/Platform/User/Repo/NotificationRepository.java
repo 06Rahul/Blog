@@ -12,7 +12,5 @@ import java.util.UUID;
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
     List<Notification> findByRecipientOrderByCreatedAtDesc(User recipient);
 
-    List<Notification> findByRecipientAndTypeOrderByCreatedAtDesc(User recipient, com.Blog.Platform.User.Model.NotificationType type);
-
     long countByRecipientAndIsReadFalse(User recipient);
 }

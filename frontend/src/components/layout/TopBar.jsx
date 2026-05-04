@@ -1,87 +1,81 @@
-import { Menu, Moon, Search, Sun } from 'lucide-react';
+import { Search, Bell, User as UserIcon, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-import { NotificationDropdown } from '../notification/NotificationDropdown';
-import { getImageUrl } from '../../utils/imageUrl';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export const TopBar = ({ setMobileNavOpen }) => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+export const TopBar = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showNotifications, setShowNotifications] = useState(false);
 
-  const handleSearch = (event) => {
-    event.preventDefault();
-    if (!searchQuery.trim()) return;
-    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-  };
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+        }
+    };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+    return (
+        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors duration-300">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-xl">
+                <form onSubmit={handleSearch} className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-700 transition-all dark:text-white"
+                    />
+                </form>
+            </div>
 
-  return (
-    <header className="shell-chrome sticky top-0 z-30 border-b backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <button className="shell-soft rounded-2xl border p-3 text-[var(--text)] hover:opacity-90 lg:hidden" onClick={() => setMobileNavOpen(true)}>
-          <Menu className="h-5 w-5" />
-        </button>
+            {/* Right Actions */}
+            <div className="flex items-center gap-6">
+                {user ? (
+                    <>
+                        {/* New Post Button */}
+                        <Link to="/blogs/new" className="flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-all">
+                            <Plus className="w-4 h-4" />
+                            <span>Create</span>
+                        </Link>
 
-        <form onSubmit={handleSearch} className="hidden min-w-0 flex-1 md:block">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search posts, people, communities, tags..."
-              className="shell-input w-full rounded-2xl border py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[var(--primary)]"
-            />
-          </div>
-        </form>
+                        {/* Notifications */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="relative p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-full transition-colors"
+                            >
+                                <Bell className="w-5 h-5" />
+                                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+                            </button>
+                        </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          <button onClick={toggleTheme} className="shell-soft rounded-2xl border p-3 text-[var(--text)] hover:opacity-90" title="Quick theme toggle">
-            {theme === 'default' ? <Moon className="h-4.5 w-4.5" /> : <Sun className="h-4.5 w-4.5" />}
-          </button>
-
-          {isAuthenticated ? (
-            <>
-              <Link to="/blogs/new" className="hidden rounded-2xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-[var(--primary-contrast)] transition hover:opacity-90 sm:inline-flex">
-                Create
-              </Link>
-              <NotificationDropdown />
-              <Link to="/profile" className="shell-soft hidden items-center gap-3 rounded-2xl border px-3 py-2.5 text-sm text-[var(--text)] hover:opacity-90 sm:flex">
-                {user?.profileImageUrl ? (
-                  <img src={getImageUrl(user.profileImageUrl)} alt="Profile" className="h-9 w-9 rounded-xl object-cover" />
+                        {/* Profile */}
+                        <Link to={`/profile/${user.username}`} className="flex items-center gap-3">
+                            {user.profileImageUrl ? (
+                                <img src={user.profileImageUrl} alt="Profile" className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700" />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+                                    {user.username?.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <div className="hidden md:block text-sm text-left">
+                                <p className="font-semibold text-gray-900 dark:text-white leading-tight">{user.firstName}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">@{user.username}</p>
+                            </div>
+                        </Link>
+                    </>
                 ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold text-[var(--text)]" style={{ backgroundColor: 'var(--primary-soft)' }}>
-                    {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
+                    <div className="flex items-center gap-4">
+                        <Link to="/login" className="text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white">Log in</Link>
+                        <Link to="/signup" className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-semibold hover:bg-blue-700 transition-all">Sign up</Link>
+                    </div>
                 )}
-                <div className="leading-tight">
-                  <p className="font-medium text-[var(--text)]">{user?.firstName || user?.username}</p>
-                  <p className="text-xs text-[var(--text-muted)]">@{user?.username}</p>
-                </div>
-              </Link>
-              <button onClick={handleLogout} className="shell-soft rounded-2xl border px-4 py-3 text-sm text-[var(--text)] hover:opacity-90">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="shell-soft rounded-2xl border px-4 py-3 text-sm text-[var(--text)] hover:opacity-90">
-                Login
-              </Link>
-              <Link to="/signup" className="rounded-2xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-[var(--primary-contrast)] transition hover:opacity-90">
-                Sign up
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
+            </div>
+        </header>
+    );
 };

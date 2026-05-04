@@ -2,7 +2,6 @@ package com.Blog.Platform.User.Controller;
 
 import com.Blog.Platform.Community.DTO.CommunityDTO;
 import com.Blog.Platform.Community.DTO.ThreadDTO;
-import com.Blog.Platform.User.DTO.SearchSuggestionResponse;
 import com.Blog.Platform.Community.Repository.CommunityRepository;
 import com.Blog.Platform.Community.Repository.DiscussionThreadRepository;
 import com.Blog.Platform.User.Model.User;
@@ -49,9 +48,6 @@ public class SearchController {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private com.Blog.Platform.Blog.Service.TrendingTagService trendingTagService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> search(@RequestParam String query,
@@ -120,74 +116,5 @@ public class SearchController {
         result.put("total", communities.size() + threads.size() + blogs.size() + users.size());
 
         return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/suggestions")
-    public ResponseEntity<List<SearchSuggestionResponse>> getSuggestions(
-            @RequestParam String query,
-            @RequestParam(defaultValue = "8") int limit
-    ) {
-        String normalized = query == null ? "" : query.trim();
-        if (normalized.isBlank()) {
-            return ResponseEntity.ok(List.of());
-        }
-
-        int safeLimit = Math.min(Math.max(limit, 1), 12);
-        List<SearchSuggestionResponse> suggestions = new java.util.ArrayList<>();
-
-        communityRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(normalized, normalized)
-                .stream()
-                .limit(Math.max(2, safeLimit / 3))
-                .forEach(community -> suggestions.add(new SearchSuggestionResponse(
-                        "community",
-                        community.getName(),
-                        community.getDescription() == null ? "Community" : community.getDescription(),
-                        "/communities/" + community.getId()
-                )));
-
-        userRepo.findByUsernameContainingIgnoreCase(normalized)
-                .stream()
-                .limit(Math.max(2, safeLimit / 3))
-                .forEach(user -> suggestions.add(new SearchSuggestionResponse(
-                        "user",
-                        "@" + user.getActualUsername(),
-                        java.util.stream.Stream.of(user.getFirstName(), user.getLastName())
-                                .filter(java.util.Objects::nonNull)
-                                .filter(name -> !name.isBlank())
-                                .collect(java.util.stream.Collectors.joining(" ")),
-                        "/profile/" + user.getActualUsername()
-                )));
-
-        trendingTagService.autocompleteTags(normalized, Math.max(2, safeLimit / 3))
-                .forEach(tag -> suggestions.add(new SearchSuggestionResponse(
-                        "tag",
-                        "#" + tag.getTagName(),
-                        tag.getViews24h() + " recent views",
-                        "/search?q=" + java.net.URLEncoder.encode(tag.getTagName(), java.nio.charset.StandardCharsets.UTF_8)
-                )));
-
-        blogPostRepository.searchEverywhere(normalized, null, PageRequest.of(0, Math.max(2, safeLimit / 3)))
-                .stream()
-                .limit(Math.max(2, safeLimit / 3))
-                .forEach(blog -> suggestions.add(new SearchSuggestionResponse(
-                        "post",
-                        blog.getTitle(),
-                        blog.getAuthor().getActualUsername(),
-                        "/blogs/" + blog.getId()
-                )));
-
-        List<SearchSuggestionResponse> deduped = suggestions.stream()
-                .collect(Collectors.toMap(
-                        suggestion -> suggestion.type() + ":" + suggestion.label().toLowerCase(),
-                        suggestion -> suggestion,
-                        (left, right) -> left,
-                        java.util.LinkedHashMap::new
-                ))
-                .values()
-                .stream()
-                .limit(safeLimit)
-                .toList();
-
-        return ResponseEntity.ok(deduped);
     }
 }

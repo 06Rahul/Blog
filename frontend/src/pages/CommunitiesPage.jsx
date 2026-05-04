@@ -14,7 +14,6 @@ export const CommunitiesPage = () => {
 
     const selectedCategory = searchParams.get('category') || '';
     const searchQuery = searchParams.get('q') || '';
-    const activeFilter = searchParams.get('filter') || 'featured';
 
     useEffect(() => {
         loadCategories();
@@ -36,7 +35,6 @@ export const CommunitiesPage = () => {
         const params = {};
         if (query) params.q = query;
         if (selectedCategory) params.category = selectedCategory;
-        if (activeFilter) params.filter = activeFilter;
         setSearchParams(params);
     };
 
@@ -44,37 +42,28 @@ export const CommunitiesPage = () => {
         const params = {};
         if (searchQuery) params.q = searchQuery;
         if (categoryId) params.category = categoryId;
-        if (activeFilter) params.filter = activeFilter;
-        setSearchParams(params);
-    };
-
-    const handleFilterChange = (filter) => {
-        const params = {};
-        if (searchQuery) params.q = searchQuery;
-        if (selectedCategory) params.category = selectedCategory;
-        params.filter = filter;
         setSearchParams(params);
     };
 
     return (
         <div className="space-y-8">
             {/* Header Section */}
-            <div className="rounded-3xl p-8 text-[var(--primary-contrast)] shadow-xl relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}>
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                        <div className="flex items-center gap-2 mb-2 text-[var(--primary-contrast)]/80 uppercase tracking-widest text-xs font-bold">
+                        <div className="flex items-center gap-2 mb-2 text-blue-200 uppercase tracking-widest text-xs font-bold">
                             <Compass className="w-4 h-4" />
                             <span>Explore</span>
                         </div>
                         <h1 className="text-3xl lg:text-4xl font-bold mb-2">Communities</h1>
-                        <p className="max-w-xl text-sm leading-relaxed text-[var(--primary-contrast)]/85">
+                        <p className="text-blue-100 max-w-xl text-sm leading-relaxed">
                             Join vibrant communities to discuss your favorite topics, share knowledge, and connect with like-minded developers.
                         </p>
                     </div>
                     {user && (
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="px-6 py-3 bg-[var(--surface)] text-[var(--text)] font-bold rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center gap-2"
+                            className="px-6 py-3 bg-white text-blue-600 font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all flex items-center gap-2"
                         >
                             <Plus className="w-5 h-5" />
                             Create Community
@@ -88,34 +77,16 @@ export const CommunitiesPage = () => {
             </div>
 
             {/* Filters & Search */}
-            <div className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                    {[
-                        { id: 'featured', label: 'Featured' },
-                        { id: 'new', label: 'New' },
-                        { id: 'trending', label: 'Trending' },
-                        { id: 'joined', label: 'Joined' },
-                    ].map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => handleFilterChange(item.id)}
-                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeFilter === item.id ? 'bg-[var(--primary)] text-[var(--primary-contrast)]' : 'bg-[var(--surface-soft)] text-[var(--text)] border border-[var(--outline)] hover:bg-[var(--surface-muted)]'}`}
-                        >
-                            {item.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-6 sticky top-20 z-10 py-2">
+            <div className="flex flex-col md:flex-row gap-6 sticky top-20 z-10 bg-gray-50 dark:bg-gray-900 py-2">
                 <div className="flex-1">
                     <form onSubmit={handleSearch} className="relative">
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--text-muted)] w-5 h-5" />
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                             type="text"
                             name="search"
                             defaultValue={searchQuery}
                             placeholder="Find a community..."
-                            className="w-full pl-12 pr-4 py-3 bg-[var(--surface)] border border-[var(--outline)] rounded-xl shadow-sm focus:ring-2 focus:ring-[var(--primary)] transition-all text-[var(--text)]"
+                            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition-all dark:text-white"
                         />
                     </form>
                 </div>
@@ -125,8 +96,8 @@ export const CommunitiesPage = () => {
                     <button
                         onClick={() => handleCategoryChange('')}
                         className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${!selectedCategory
-                                ? 'bg-[var(--primary)] text-[var(--primary-contrast)] shadow-md'
-                                : 'bg-[var(--surface)] text-[var(--text)] border border-[var(--outline)] hover:bg-[var(--surface-soft)]'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                             }`}
                     >
                         All
@@ -136,8 +107,8 @@ export const CommunitiesPage = () => {
                             key={cat.id}
                             onClick={() => handleCategoryChange(cat.id)}
                             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat.id
-                                    ? 'bg-[var(--primary)] text-[var(--primary-contrast)] shadow-md'
-                                    : 'bg-[var(--surface)] text-[var(--text)] border border-[var(--outline)] hover:bg-[var(--surface-soft)]'
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                         >
                             {cat.name}
@@ -145,9 +116,8 @@ export const CommunitiesPage = () => {
                     ))}
                 </div>
             </div>
-            </div>
 
-            <CommunityList search={searchQuery} category={selectedCategory} joined={activeFilter === 'joined'} filter={activeFilter} />
+            <CommunityList search={searchQuery} category={selectedCategory} joined={searchParams.get('joined') === 'true'} />
 
             <CreateCommunityModal
                 isOpen={isModalOpen}
