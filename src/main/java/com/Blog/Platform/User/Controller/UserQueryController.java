@@ -6,6 +6,8 @@ import com.Blog.Platform.User.DTO.CustomUserDetails;
 import com.Blog.Platform.User.DTO.UserProfileResponse;
 import com.Blog.Platform.User.Model.User;
 import com.Blog.Platform.User.Service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,12 +18,14 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "User profile and lookup endpoints.")
 public class UserQueryController {
 
     private final UserService userService;
     private final AiUsageService aiUsageService;
 
     @GetMapping("/me")
+    @Operation(summary = "Get my profile", description = "Returns the authenticated user's profile along with today's AI usage.")
     public ResponseEntity<UserProfileResponse> me(Authentication auth) {
 
         CustomUserDetails user =
@@ -44,6 +48,7 @@ public class UserQueryController {
 
 
     @GetMapping("/username/{username}")
+    @Operation(summary = "Get user by username", description = "Fetches a user by their username.")
     public ResponseEntity<User> getByUsername(@PathVariable String username) {
 
         Optional<User> user = userService.findByUsername(username);
@@ -54,6 +59,7 @@ public class UserQueryController {
     }
 
     @GetMapping("/email/{email}")
+    @Operation(summary = "Get user by email", description = "Fetches a user by their email address.")
     public ResponseEntity<User> getByEmail(@PathVariable String email) {
 
         Optional<User> user = userService.findByEmail(email);

@@ -107,6 +107,14 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public Page<BlogPostResponse> getDailyThoughts(Pageable pageable) {
+        return blogPostRepository
+                .findByCategory_NameIgnoreCaseAndStatus(
+                        "dailythought", BlogStatus.PUBLISHED, pageable)
+                .map(blogPostMapper::toResponse);
+    }
+
+    @Override
     public BlogPostResponse getMyBlogById(UUID blogId) {
         User author = getCurrentUser();
 

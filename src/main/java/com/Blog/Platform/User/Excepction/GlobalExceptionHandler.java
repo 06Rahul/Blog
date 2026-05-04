@@ -1,7 +1,7 @@
 package com.Blog.Platform.User.Excepction;
 
-
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,19 +25,9 @@ public class GlobalExceptionHandler {
         );
     }
 
- public ResponseEntity<ErrorResponse> InvalidCredentialsException(InvalidCredentialsException e) {
-        return new ResponseEntity<>(
-                new ErrorResponse(
-                        HttpStatus.BAD_REQUEST.value(),
-                        e.getMessage()
-                        ,LocalDateTime.now()
-                ),
-                HttpStatus.BAD_REQUEST );
- }
-
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaxSizeException(MaxUploadSizeExceededException exc) {
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+        return ResponseEntity.status(HttpStatusCode.valueOf(413))
                 .body("File is too large! Max limit is " + exc.getMaxUploadSize());
     }
 
@@ -76,7 +66,8 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNAUTHORIZED
         );
     }
-@ExceptionHandler(Exception.class)
+
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         return new ResponseEntity<>(
                 new ErrorResponse(

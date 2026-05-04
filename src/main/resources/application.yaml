@@ -34,6 +34,8 @@ server:
 app:
   storage:
     image-dir: E:/Java/user-images/
+  swagger:
+    auto-open: true
 jwt:
   secret: veryStrongSecretKeyChangeLater1452369871zcvbnm,asdfghjkl;'][poiuytrewqQWEDFGHJNM<VBJKOPUJKMTRFGBWEDCVBOIKL<POLKAWSEDRFYGUHJ
   expiration: 86400000

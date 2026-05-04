@@ -38,5 +38,8 @@ AND b.status = 'PUBLISHED'
 """)
     Page<BlogPost> findByAuthorUsername(String username, Pageable pageable);
 
+    Page<BlogPost> findByCategory_NameIgnoreCaseAndStatus(
+            String name, BlogStatus status, Pageable pageable);
+
 
 }
