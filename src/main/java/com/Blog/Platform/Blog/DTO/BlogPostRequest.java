@@ -1,11 +1,12 @@
 package com.Blog.Platform.Blog.DTO;
 
 import com.Blog.Platform.Blog.Model.BlogStatus;
-import com.Blog.Platform.User.Model.User;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.util.Set;
+import java.util.UUID;
 
 @Data
 public class BlogPostRequest {
@@ -19,5 +20,15 @@ public class BlogPostRequest {
 
     // Optional: default to DRAFT if null
     private BlogStatus status;
+
+    private UUID categoryId;
+
+    private Set<String> tags;
+
+    private String coverImageUrl;
+
+    private UUID communityId;
+
+    private boolean communityExclusive;
 }
 

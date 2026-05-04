@@ -35,4 +35,47 @@ public class AiUsage {
 
     @Column(nullable = false)
     private int count;
+
+    public AiUsage() {
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public AiFeature getFeature() {
+        return feature;
+    }
+
+    public void setFeature(AiFeature feature) {
+        this.feature = feature;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
 }

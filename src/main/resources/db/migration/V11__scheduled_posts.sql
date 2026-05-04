@@ -1,0 +1,1 @@
+ALTER TABLE blog_posts ADD COLUMN publish_at DATETIME NULL;

@@ -18,7 +18,7 @@ public class UserMapper {
         user.setBio(request.getBio());
         user.setProfileImageUrl(request.getProfileImageUrl());
         user.setWebsite(request.getWebsite());
-        user.setMobileNumber(request.getMobileNumber());
+        user.setMobileNumber(request.getMobileNumber() != null && request.getMobileNumber().isBlank() ? null : request.getMobileNumber());
         user.setRole(Role.USER);
         return user;
     }

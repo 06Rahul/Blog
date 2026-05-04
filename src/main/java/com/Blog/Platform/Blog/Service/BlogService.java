@@ -26,7 +26,9 @@ public interface BlogService {
     Page<BlogPostResponse> getMyPublishedBlogs(Pageable pageable);
     BlogPostResponse getMyBlogById(UUID blogId);
 
-    Page<BlogPostResponse> getPublishedBlogs(Pageable pageable);
+    Page<BlogPostResponse> getPublishedBlogs(UUID categoryId, Pageable pageable);
+
+    BlogPostResponse getPublishedBlogById(UUID blogId);
 
     // Update
     BlogPostResponse updateDraft(UUID blogId, BlogPostRequest request);
@@ -39,4 +41,15 @@ public interface BlogService {
 
     BlogPost getMyBlogEntity(UUID blogId);
 
+    BlogPostResponse schedulePost(UUID blogId, java.time.LocalDateTime publishAt);
+
+    BlogPostResponse cancelSchedule(UUID blogId);
+
+    Page<BlogPostResponse> getMyScheduledBlogs(Pageable pageable);
+
+    Page<BlogPostResponse> getRelevanceFeed(Pageable pageable);
+    
+    Page<BlogPostResponse> getFollowingFeed(Pageable pageable);
+    
+    Page<BlogPostResponse> getTrendingFeed(Pageable pageable);
 }

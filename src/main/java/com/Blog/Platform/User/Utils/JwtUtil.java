@@ -68,4 +68,28 @@ public class JwtUtil {
 
         return "ACCESS".equals(type);
     }
+
+    public String generateCoauthorToken(String coauthorId) {
+        return Jwts.builder()
+                .subject(coauthorId)
+                .claim("type", "COAUTHOR_INVITE")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 172800000L)) // 48h
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public boolean isCoauthorToken(String token) {
+        try {
+            String type = Jwts.parser()
+                    .verifyWith((SecretKey) getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("type", String.class);
+            return "COAUTHOR_INVITE".equals(type);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

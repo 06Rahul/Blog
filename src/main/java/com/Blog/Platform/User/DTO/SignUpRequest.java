@@ -36,7 +36,7 @@ public class SignUpRequest {
     private String website;
 
     @Pattern(
-            regexp = "^[6-9]\\d{9}$",
+            regexp = "^([6-9]\\d{9})?$",
             message = "Invalid Indian mobile number"
     )
     private String mobileNumber;

@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #fff7fb;
+  --bg-end: #eff6ff;
+  --panel: rgba(255, 255, 255, 0.78);
+  --panel-border: rgba(244, 114, 182, 0.12);
+  --chrome: rgba(255, 250, 252, 0.88);
+  --text: #334155;
+  --text-muted: #64748b;
+  --hero-a: rgba(251, 113, 133, 0.16);
+  --hero-b: rgba(125, 211, 252, 0.18);
+  --surface-soft: rgba(255, 255, 255, 0.84);
+  --surface-muted: #fff1f5;
+  --outline: #fbcfe8;
+  --primary: #fb7185;
+  --primary-soft: #fecdd3;
+  --primary-contrast: #ffffff;
+  --secondary: #bae6fd;
+  --accent: #f9a8d4;
+  --highlight: #facc15;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code {
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+}
+
+.app-bg {
+  background:
+    radial-gradient(circle at top, var(--hero-a), transparent 24%),
+    radial-gradient(circle at 80% 10%, var(--hero-b), transparent 18%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg) 30%, var(--bg-end) 100%);
+}
+
+.panel {
+  border: 1px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), var(--panel));
+  backdrop-filter: blur(18px);
+  border-radius: 32px;
+  box-shadow: 0 24px 60px -44px rgba(244, 114, 182, 0.3);
+}
+
+.hero-panel {
+  position: relative;
+  border: 1px solid rgba(251, 113, 133, 0.16);
+  background:
+    radial-gradient(circle at top left, var(--hero-a), transparent 28%),
+    radial-gradient(circle at 85% 20%, var(--hero-b), transparent 22%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), color-mix(in srgb, var(--panel) 100%, transparent 0%));
+  backdrop-filter: blur(20px);
+  border-radius: 36px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 32px 80px -52px rgba(251, 113, 133, 0.32);
+}
+
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(251, 113, 133, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 252, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  border-radius: inherit;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent 85%);
+}
+
+.shell-chrome {
+  background: var(--chrome);
+  border-color: var(--panel-border);
+  color: var(--text);
+}
+
+.shell-soft {
+  background: var(--surface-soft);
+  border-color: var(--outline);
+}
+
+.shell-input {
+  background: var(--surface-soft);
+  border-color: var(--outline);
+  color: var(--text);
+}
+
+.shell-input::placeholder {
+  color: var(--text-muted);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+select option {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

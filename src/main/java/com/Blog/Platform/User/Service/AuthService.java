@@ -9,6 +9,12 @@ public interface AuthService {
 
     SignUpResponse register(SignUpRequest request, MultipartFile image);
     SignInResponse login(SignInRequest request, HttpServletResponse response);
+    ApiMessageResponse verifySignupOtp(VerifyOtpRequest request);
+    OtpDispatchResponse resendSignupOtp(ResendOtpRequest request);
+    OtpDispatchResponse requestPasswordResetOtp(ResendOtpRequest request);
+    ApiMessageResponse verifyPasswordResetOtp(VerifyOtpRequest request);
+    ApiMessageResponse resetPasswordWithOtp(PasswordResetConfirmRequest request);
+    UsernameAvailabilityResponse checkUsernameAvailability(String username);
 
 
     TokenRefreshResponse refreshToken(HttpServletRequest request , HttpServletResponse response);

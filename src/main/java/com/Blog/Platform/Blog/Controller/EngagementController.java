@@ -1,0 +1,89 @@
+package com.Blog.Platform.Blog.Controller;
+
+import com.Blog.Platform.Blog.DTO.CommentRequest;
+import com.Blog.Platform.Blog.DTO.CommentResponse;
+import com.Blog.Platform.Blog.ServiceImpl.EngagementService;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/blogs")
+public class EngagementController {
+
+    private final EngagementService engagementService;
+
+    public EngagementController(EngagementService engagementService) {
+        this.engagementService = engagementService;
+    }
+
+    // Comments
+    @PostMapping("/{blogId}/comments")
+    public ResponseEntity<CommentResponse> addComment(
+            @PathVariable UUID blogId,
+            @RequestBody CommentRequest request) {
+        return ResponseEntity.ok(engagementService.addComment(blogId, request));
+    }
+
+    @GetMapping("/{blogId}/comments")
+    public ResponseEntity<Page<CommentResponse>> getComments(
+            @PathVariable UUID blogId,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(engagementService.getComments(blogId, pageable));
+    }
+
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<CommentResponse> editComment(
+            @PathVariable UUID commentId,
+            @RequestBody CommentRequest request) {
+        return ResponseEntity.ok(engagementService.editComment(commentId, request.getContent()));
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
+        engagementService.deleteComment(commentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/comments/{commentId}/like")
+    public ResponseEntity<Void> toggleCommentLike(@PathVariable UUID commentId) {
+        engagementService.toggleCommentLike(commentId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/comments/{commentId}/likes")
+    public ResponseEntity<Map<String, Object>> getCommentLikeStatus(@PathVariable UUID commentId) {
+        long count = engagementService.getCommentLikeCount(commentId);
+        boolean isLiked = engagementService.isCommentLikedByCurrentUser(commentId);
+        return ResponseEntity.ok(Map.of("count", count, "isLiked", isLiked));
+    }
+
+    // Likes
+    @PostMapping("/{blogId}/like")
+    public ResponseEntity<Void> toggleLike(@PathVariable UUID blogId) {
+        engagementService.toggleLike(blogId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{blogId}/likes")
+    public ResponseEntity<Map<String, Object>> getLikeStatus(@PathVariable UUID blogId) {
+        long count = engagementService.getLikeCount(blogId);
+        boolean isLiked = engagementService.isLikedByCurrentUser(blogId);
+        return ResponseEntity.ok(Map.of(
+                "count", count,
+                "isLiked", isLiked));
+    }
+    
+    @GetMapping("/{blogId}/likers")
+    public ResponseEntity<java.util.List<com.Blog.Platform.User.DTO.PublicUserProfileResponse>> getBlogLikers(
+            @PathVariable UUID blogId) {
+        return ResponseEntity.ok(engagementService.getBlogLikers(blogId));
+    }
+}

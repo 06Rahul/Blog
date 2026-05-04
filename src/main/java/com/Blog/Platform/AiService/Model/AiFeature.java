@@ -4,5 +4,8 @@ public enum AiFeature {
     SUMMARY,
     GRAMMAR,
     ENHANCE,
-    TITLE
+    TITLE,
+    COACH,
+    COMMENT_REPLY,
+    THUMBNAIL
 }

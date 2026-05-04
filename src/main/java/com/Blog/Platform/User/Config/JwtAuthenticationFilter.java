@@ -25,7 +25,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         return path.equals("/api/user/login")
                 || path.equals("/api/user/signup")
-                || path.equals("/api/user/refresh");
+                || path.equals("/api/user/refresh")
+                || path.equals("/api/user/signup/verify-otp")
+                || path.equals("/api/user/signup/resend-otp")
+                || path.equals("/api/user/password-reset/request-otp")
+                || path.equals("/api/user/password-reset/verify-otp")
+                || path.equals("/api/user/password-reset/confirm");
     }
 
     @Override
