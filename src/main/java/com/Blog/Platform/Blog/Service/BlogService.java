@@ -33,6 +33,7 @@ public interface BlogService {
     BlogPostResponse getMyBlogById(UUID blogId);
 
     Page<BlogPostResponse> getPublishedBlogs(Pageable pageable);
+    Page<BlogPostResponse> getDailyThoughts(Pageable pageable);
 
     BlogPostResponse getPublishedBlogById(UUID blogId);
 

@@ -73,6 +73,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Login", description = "Authenticates user credentials and returns access token details. May also set refresh token cookie depending on implementation.")
     public ResponseEntity<SignInResponse> login(
             @Valid @RequestBody SignInRequest request,
             HttpServletResponse response) {
@@ -80,6 +81,7 @@ public class UserController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Logout", description = "Logs the current user out and clears auth/refresh tokens if applicable.")
     public ResponseEntity<Void> logout(HttpServletRequest request,
             HttpServletResponse response) {
         authService.logout(request, response);
@@ -87,6 +89,7 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Refresh token", description = "Issues a new access token using the refresh token (typically from cookie).")
     public ResponseEntity<TokenRefreshResponse> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response) {

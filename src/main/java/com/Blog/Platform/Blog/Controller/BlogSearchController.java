@@ -23,6 +23,7 @@ public class BlogSearchController {
     }
 
     @GetMapping("/title")
+    @Operation(summary = "Search by title", description = "Searches published blogs by title (query parameter `q`).")
     public Page<BlogPostResponse> searchByTitle(
             @RequestParam String q,
             Pageable pageable) {
@@ -30,6 +31,7 @@ public class BlogSearchController {
     }
 
     @GetMapping("/tag")
+    @Operation(summary = "Search by tag", description = "Searches published blogs by a tag name.")
     public Page<BlogPostResponse> searchByTag(
             @RequestParam String tag,
             Pageable pageable) {
@@ -37,6 +39,7 @@ public class BlogSearchController {
     }
 
     @GetMapping("/author")
+    @Operation(summary = "Search by author", description = "Searches published blogs by author username.")
     public Page<BlogPostResponse> searchByAuthor(
             @RequestParam String username,
             Pageable pageable) {

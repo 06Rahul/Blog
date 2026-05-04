@@ -19,6 +19,7 @@ public class AiUsageController {
     }
 
     @GetMapping("/usage")
+    @Operation(summary = "Get today's AI usage", description = "Returns today's used tokens/credits and the daily limit for the authenticated user.")
     public ResponseEntity<AiUsageResponse> usage() {
         return ResponseEntity.ok(aiUsageService.getTodayUsage());
     }

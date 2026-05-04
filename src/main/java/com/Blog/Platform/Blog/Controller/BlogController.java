@@ -5,6 +5,8 @@ import com.Blog.Platform.Blog.DTO.BlogPostRequest;
 import com.Blog.Platform.Blog.DTO.BlogPostResponse;
 import com.Blog.Platform.Blog.Model.BlogPost;
 import com.Blog.Platform.Blog.Service.BlogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;

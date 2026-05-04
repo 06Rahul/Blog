@@ -24,11 +24,13 @@ public class MetaController {
     }
 
     @GetMapping("/categories")
+    @Operation(summary = "List categories", description = "Returns all blog categories.")
     public List<Category> categories() {
         return categoryRepo.findAll();
     }
 
     @GetMapping("/tags")
+    @Operation(summary = "List tags", description = "Returns all blog tags.")
     public List<Tag> tags() {
         return tagRepo.findAll();
     }
