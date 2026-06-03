@@ -3,8 +3,8 @@
 #
 #  datasource:
 #    url: jdbc:mysql://localhost:3306/user_service?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-#    username: blog_app
-#    password: strongPass123
+#    username: username
+#    password: pass
 #    driver-class-name: com.mysql.cj.jdbc.Driver
 #
 #  jpa:
@@ -34,22 +34,22 @@
 #  storage:
 #    image-dir: ./user-images/
 #jwt:
-#  secret: veryStrongSecretKeyChangeLater1452369871zcvbnm,asdfghjkl;'][poiuytrewqQWEDFGHJNM<VBJKOPUJKMTRFGBWEDCVBOIKL<POLKAWSEDRFYGUHJ
+#  secret: secre-key
 #  expiration: 86400000
 #  refresh-expiration: 604800000
 #
 #gemini:
 #  api:
-#    key: AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
-#    # url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCz01slMHrqD2oTyFNc78f9HiwsztyFmIA
-#    base-url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+#    key: api-key
+#    # url: url with api key
+#    base-url: url
 #
 #spring:
 #  mail:
 #    host: smtp.gmail.com
 #    port: 587
-#    username: rahulmamgain269@gmail.com
-#    password: bdqukuzslbfhddxl  # no spaces
+#    username: username
+#    password: password # no spaces
 #    properties:
 #      mail:
 #        smtp:
@@ -59,8 +59,8 @@
 ##mail:
 ##  host: smtp.gmail.com
 ##  port: 587
-##  username: rahulmamgain269@gmail.com
-##  password: bdqukuzslbfhddxl
+##  username: user-mail
+##  password: password
 ##  properties:
 ##    mail:
 ##      smtp:
@@ -74,8 +74,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://localhost:3306/user_service?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: blog_app
-    password: strongPass123
+    username: user-name
+    password: pass
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
